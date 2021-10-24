@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+import "peer_id.proto";
+
+message Peer {
+    required PeerId id = 1;
+
+    required string endpoint = 2;
+
+    required bool is_up = 3;
+
+    optional bool is_responding = 4;
+}

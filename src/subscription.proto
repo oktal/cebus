@@ -1,0 +1,10 @@
+syntax = "proto2";
+
+import "message_type_id.proto";
+import "binding_key.proto";
+
+message Subscription {
+    required MessageTypeId message_type_id = 1;
+
+    required BindingKey binding_key = 2;
+}

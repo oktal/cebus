@@ -1,0 +1,7 @@
+build/
+
+deps/bin
+deps/lib
+deps/include
+deps/build
+deps/share

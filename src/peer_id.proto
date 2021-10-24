@@ -1,0 +1,5 @@
+syntax = "proto2";
+
+message PeerId {
+    required string value = 1;
+}
