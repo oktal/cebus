@@ -1,6 +1,6 @@
 #include "munit.h"
 
-#include "peer_id.h"
+#include "cebus/peer_id.h"
 
 MunitResult should_set_peer_id_value(const MunitParameter params[], void* data)
 {

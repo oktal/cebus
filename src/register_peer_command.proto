@@ -1,0 +1,8 @@
+syntax = "proto2";
+
+import "peer_descriptor.proto";
+
+message RegisterPeerCommand
+{
+    required PeerDescriptor peer = 1;
+}

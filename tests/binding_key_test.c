@@ -1,6 +1,6 @@
 #include "munit.h"
 
-#include "binding_key.h"
+#include "cebus/binding_key.h"
 
 MunitResult should_create_binding_key_from_fragments(const  MunitParameter params[], void* data)
 {

@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+import "peer_id.proto";
+
+message OriginatorInfo {
+    required PeerId sender_id = 1;
+
+    required string sender_endpoint = 2;
+
+    required string sender_machine = 3;
+
+    required string initiator_user_name = 4;
+}

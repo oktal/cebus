@@ -1,6 +1,5 @@
-#include "binding_key.h"
-
-#include "iter_utils.h"
+#include "cebus/binding_key.h"
+#include "cebus/iter_utils.h"
 
 #include <stdlib.h>
 #include <string.h>

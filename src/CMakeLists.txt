@@ -4,18 +4,31 @@ include(Protobuf)
 
 set(cebus_PROTOS
     binding_key.proto
+    message_id.proto
     message_type_id.proto
+    originator_info.proto
     peer_descriptor.proto
     peer_id.proto
     peer.proto
+    register_peer_command.proto
     subscription.proto
+    transport_message.proto
+    uuid.proto
 )
 
 protobuf_generate_c(PROTO_SRCS PROTO_HDRS PROTOS ${cebus_PROTOS})
 
 set(cebus_SRC
+    alloc.c
     binding_key.c
+    message_context.c
+    message_id.c
+    message_type_id.c
+    originator_info.c
+    peer.c
     peer_id.c
+    transport_message.c
+    zmq_outbound_socket.c
 )
 
 set(DEPS_ROOT ${CMAKE_SOURCE_DIR}/deps)
@@ -36,4 +49,5 @@ target_include_directories(cebus
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(cebus PUBLIC)
+target_link_directories(cebus PUBLIC ${DEPS_ROOT}/lib)
+target_link_libraries(cebus PUBLIC czmq protobuf-c)

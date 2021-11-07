@@ -1,0 +1,22 @@
+syntax = "proto2";
+
+import "message_id.proto";
+import "message_type_id.proto";
+import "originator_info.proto";
+import "peer_id.proto";
+
+message TransportMessage {
+    required MessageId id = 1;
+
+    required MessageTypeId message_type_id = 2;
+
+    required bytes content_bytes = 3; 
+
+    required OriginatorInfo originator = 4;
+
+    optional string environment = 5;
+
+    optional bool was_persisted = 6;
+
+    repeated PeerId persistent_peer_ids = 7;
+}
