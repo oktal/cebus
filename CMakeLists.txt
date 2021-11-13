@@ -13,6 +13,9 @@ option(CEBUS_BUILD_TESTS "Build tests" OFF)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")
 
+set(DEPS_ROOT ${CMAKE_SOURCE_DIR}/deps)
+
+add_subdirectory(cebus-protoc-gen)
 add_subdirectory(src)
 
 if(CEBUS_BUILD_TESTS)
@@ -64,5 +67,5 @@ set(cebus_LIB_DEST "lib/cebus-${cebus_VERSION}")
 #     DESTINATION ${cebus_LIB_DEST}
 # )
 
-add_executable(cebus-main main.c)
-target_link_libraries(cebus-main PRIVATE cebus)
+# add_executable(cebus-main main.c)
+# target_link_libraries(cebus-main PRIVATE cebus)

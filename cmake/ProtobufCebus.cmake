@@ -1,8 +1,9 @@
 find_program(
     PROTOC_BIN
 
-    NAMES protoc-c
-    PATHS ${CMAKE_SOURCE_DIR}/bin
+    NAMES protoc
+    PATHS ${DEPS_ROOT}
+    PATH_SUFFIXES bin
 )
 
 function(protobuf_generate_c SRCS HDRS)
@@ -47,8 +48,12 @@ function(protobuf_generate_c SRCS HDRS)
     add_custom_command(
       OUTPUT ${_generated_srcs}
       COMMAND  ${PROTOC_BIN}
-               --c_out=${protobuf_generate_c_PROTOC_OUT_DIR} ${_protobuf_include_path} ${_abs_file}
-      DEPENDS ${_abs_file} ${PROTOC_BIN}
+               --proto_path=${CMAKE_SOURCE_DIR}/cebus-protoc-gen/protobuf-c
+               --proto_path=${CMAKE_SOURCE_DIR}/cebus-protoc-gen/protobuf-cebus
+               --plugin=protoc-gen-cebus=$<TARGET_FILE:cebus-protoc-gen>
+               --cebus_out=${protobuf_generate_c_PROTOC_OUT_DIR}
+               ${_protobuf_include_path} ${_abs_file}
+      DEPENDS ${_abs_file} ${PROTOC_BIN} $<TARGET_FILE:cebus-protoc-gen>
       COMMENT "Running C protocol buffer compiler on ${_proto}"
       VERBATIM )
   endforeach()
