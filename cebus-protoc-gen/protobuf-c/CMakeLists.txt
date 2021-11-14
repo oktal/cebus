@@ -6,7 +6,11 @@ find_package(Protobuf REQUIRED)
 
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS protobuf-c.proto)
 
-add_library(protobuf-c ${PROTO_SRCS} ${PROTO_HDRS})
+add_library(protobuf-c
+    ${PROTO_SRCS}
+    ${PROTO_HDRS}
+    protobuf-c.c
+)
 
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} PATH)
 
