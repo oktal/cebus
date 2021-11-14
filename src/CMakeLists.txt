@@ -27,6 +27,7 @@ set(cebus_SRC
     originator_info.c
     peer.c
     peer_id.c
+    timespan.c
     transport_message.c
     zmq_outbound_socket.c
 )

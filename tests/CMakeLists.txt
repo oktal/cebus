@@ -10,3 +10,4 @@ endfunction()
 
 cebus_test(binding_key_test)
 cebus_test(peer_id_test)
+cebus_test(timespan_test)

@@ -1,5 +1,4 @@
-#include "munit.h"
-
+#include "suite.h"
 #include "cebus/peer_id.h"
 
 MunitResult should_set_peer_id_value(const MunitParameter params[], void* data)
@@ -10,28 +9,7 @@ MunitResult should_set_peer_id_value(const MunitParameter params[], void* data)
     return MUNIT_OK;
 }
 
-MunitTest tests[] = {
-    {
-        "should_set_peer_id_value",
-        should_set_peer_id_value,
-        NULL,
-        NULL,
-        MUNIT_TEST_OPTION_NONE,
-        NULL
-    },
-
-    { NULL, NULL, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL }
-};
-
-static const MunitSuite suite = {
+CEBUS_DECLARE_TEST_SUITE(
     "peer_id_tests",
-    tests,
-    NULL,
-    1,
-    MUNIT_SUITE_OPTION_NONE
-};
-
-int main(int argc, const char* argv[])
-{
-    return munit_suite_main(&suite, NULL, argc, argv);
-}
+    CEBUS_TEST(should_set_peer_id_value)
+);
