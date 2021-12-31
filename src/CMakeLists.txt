@@ -1,4 +1,4 @@
-include(Protobuf)
+include(ProtobufCebus)
 
 # Generate protobuf files
 
@@ -30,9 +30,11 @@ set(cebus_SRC
     timespan.c
     transport_message.c
     zmq_outbound_socket.c
+    zmq_socket_options.c
+
+    $<$<PLATFORM_ID:Linux>:time_unix.c>
 )
 
-set(DEPS_ROOT ${CMAKE_SOURCE_DIR}/deps)
 
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} PATH)
 
@@ -51,4 +53,4 @@ target_include_directories(cebus
 )
 
 target_link_directories(cebus PUBLIC ${DEPS_ROOT}/lib)
-target_link_libraries(cebus PUBLIC czmq protobuf-c)
+target_link_libraries(cebus PUBLIC czmq protobuf-cebus)
