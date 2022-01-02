@@ -1,8 +1,10 @@
 syntax = "proto2";
 
+import "cebus.proto";
 import "peer_descriptor.proto";
 
-message RegisterPeerCommand
-{
+message RegisterPeerCommand {
+    option (message_type) = Command;
+
     required PeerDescriptor peer = 1;
 }

@@ -191,6 +191,12 @@ void cb_hasher_init_random(cb_hasher* hasher)
 CB_HASHER_OVERLOADS
 #undef CB_HASHER_O
 
+void cb_hasher_write_str(cb_hasher* hasher, const char* str)
+{
+    const size_t len = strlen(str);
+    cb_hasher_write(hasher, str, len);
+}
+
 uint64_t cb_hasher_finish(cb_hasher* hasher)
 {
     uint64_t b = (((uint64_t) hasher->len & 0xff) << 56) | hasher->tail;

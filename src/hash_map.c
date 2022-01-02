@@ -133,6 +133,12 @@ cb_hash_map* cb_hash_map_new(cb_hash_func hash_func, cb_hash_eq key_eq)
     return map;
 }
 
+void cb_hash_map_free(cb_hash_map* map)
+{
+    free(map->buckets);
+    free(map);
+}
+
 cb_hash_value_t cb_hash_get(cb_hash_map* map, const cb_hash_key_t key)
 {
     cb_hash_bucket* bucket = cb_hash_lookup(map, key, NULL);

@@ -6,16 +6,16 @@
 
 #include "peer.pb-c.h"
 
-typedef struct peer
+typedef struct cb_peer
 {
-    peer_id id;
+    cb_peer_id peer_id;
     char endpoint[CEBUS_ENDPOINT_MAX];
 
     cebus_bool is_up;
     cebus_bool is_responding;
-} peer;
+} cb_peer;
 
-void peer_set_endpoint(peer* peer, const char* value);
+void cb_peer_set_endpoint(cb_peer* peer, const char* value);
 
-Peer* peer_proto_new(const peer* peer);
-void peer_proto_free(Peer* peer);
+Peer* cb_peer_proto_new(const cb_peer* peer);
+void cb_peer_proto_free(Peer* peer);

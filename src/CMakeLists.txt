@@ -30,9 +30,11 @@ set(cebus_SRC
     peer.c
     peer_id.c
     timespan.c
+    threading.c
     transport_message.c
     zmq_outbound_socket.c
     zmq_socket_options.c
+    zmq_transport.c
 
     $<$<PLATFORM_ID:Linux>:time_unix.c>
 )

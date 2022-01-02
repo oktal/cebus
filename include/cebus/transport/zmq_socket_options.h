@@ -3,9 +3,9 @@
 #include "cebus/cebus_bool.h"
 #include "cebus/utils/timespan.h"
 
-#define ZMQ_SOCKET_OPTION_NONE -1
+#define CB_ZMQ_SOCKET_OPTION_NONE -1
 
-typedef struct zmq_socket_options
+typedef struct cb_zmq_socket_options
 {
     // Configures ZMQ_SNDHWM (high water mark for outbound messages).
     int send_high_watermark;
@@ -43,6 +43,6 @@ typedef struct zmq_socket_options
         timespan keep_alive_interval;
 
     } keep_alive;
-} zmq_socket_options;
+} cb_zmq_socket_options;
 
-void zmq_socket_options_init_default(zmq_socket_options* options);
+void cb_zmq_socket_options_init_default(cb_zmq_socket_options* options);

@@ -3,9 +3,9 @@
 
 MunitResult should_set_peer_id_value(const MunitParameter params[], void* data)
 {
-    peer_id peerid;
-    peer_id_set(&peerid, "Peer.Test.0");
-    munit_assert_string_equal(peer_id_get(&peerid), "Peer.Test.0");
+    cb_peer_id peerid;
+    cb_peer_id_set(&peerid, "Peer.Test.0");
+    munit_assert_string_equal(cb_peer_id_get(&peerid), "Peer.Test.0");
     return MUNIT_OK;
 }
 

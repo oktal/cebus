@@ -10,7 +10,7 @@
 
 #include "transport_message.pb-c.h"
 
-typedef struct transport_message
+typedef struct cb_transport_message
 {
     message_id id;
     message_type_id message_type_id;
@@ -22,10 +22,15 @@ typedef struct transport_message
     void *data;
     size_t n_data;
 
-} transport_message;
+} cb_transport_message;
 
-void* pack_message(const ProtobufCMessage* proto, size_t *size_out);
-transport_message* to_transport_message(const ProtobufCMessage* message, const peer_id* peer_id, const char* sender_endpoint, const char* environment, const char* namespace);
+void* cb_pack_message(const ProtobufCMessage* proto, size_t *size_out);
+cb_transport_message* to_transport_message(
+        const ProtobufCMessage* message,
+        const cb_peer_id* peer_id,
+        const char* sender_endpoint,
+        const char* environment,
+        const char* namespace);
 
-TransportMessage* transport_message_proto_new(const transport_message* message);
-void transport_message_proto_free(TransportMessage* message);
+TransportMessage* cb_transport_message_proto_new(const cb_transport_message* message);
+void cb_transport_message_proto_free(TransportMessage* message);

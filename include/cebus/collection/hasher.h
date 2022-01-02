@@ -34,5 +34,7 @@ void cb_hasher_write(cb_hasher* hasher, const void* buf, size_t len);
   CB_HASHER_OVERLOADS
 #undef CB_HASHER_O
 
+void cb_hasher_write_str(cb_hasher* hasher, const char* str);
+
 uint64_t cb_hasher_finish(cb_hasher* hasher);
 void cb_hasher_reset(cb_hasher* hasher);

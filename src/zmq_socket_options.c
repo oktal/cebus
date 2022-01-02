@@ -1,6 +1,6 @@
 #include "cebus/transport/zmq_socket_options.h"
 
-void zmq_socket_options_init_default(zmq_socket_options* options)
+void cb_zmq_socket_options_init_default(cb_zmq_socket_options* options)
 {
     options->send_high_watermark = 20000;
     options->send_timeout = timespan_from_millis(1100);
