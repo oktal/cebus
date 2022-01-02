@@ -6,7 +6,4 @@ typedef enum cebus_bool
     cebus_true = 1
 } cebus_bool;
 
-inline cebus_bool cebus_bool_from_int(int value)
-{
-    return value > 0 ? cebus_true : cebus_false;
-}
+#define cebus_bool_from_int(value) ((value) > 0 ? cebus_true : cebus_false)

@@ -67,5 +67,5 @@ set(cebus_LIB_DEST "lib/cebus-${cebus_VERSION}")
 #     DESTINATION ${cebus_LIB_DEST}
 # )
 
-# add_executable(cebus-main main.c)
-# target_link_libraries(cebus-main PRIVATE cebus)
+add_executable(cebus-main main.c)
+target_link_libraries(cebus-main PRIVATE cebus)

@@ -21,6 +21,8 @@ protobuf_generate_c(PROTO_SRCS PROTO_HDRS PROTOS ${cebus_PROTOS})
 set(cebus_SRC
     alloc.c
     binding_key.c
+    hash_map.c
+    hasher.c
     message_context.c
     message_id.c
     message_type_id.c

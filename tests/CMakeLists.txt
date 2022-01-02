@@ -9,5 +9,7 @@ function(cebus_test test_name)
 endfunction()
 
 cebus_test(binding_key_test)
+cebus_test(hasher_test)
+cebus_test(hash_map_test)
 cebus_test(peer_id_test)
 cebus_test(timespan_test)
