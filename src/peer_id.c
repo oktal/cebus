@@ -38,7 +38,7 @@ void cb_peer_id_hash(cb_hasher* hasher, cb_hash_key_t peer_key)
     cb_hasher_write_str(hasher, peer_id->value);
 }
 
-cebus_bool peer_id_hash_eq(cb_hash_key_t lhs, cb_hash_key_t rhs)
+cebus_bool cb_peer_id_hash_eq(cb_hash_key_t lhs, cb_hash_key_t rhs)
 {
     const cb_peer_id *p0 = (cb_peer_id *) lhs;
     const cb_peer_id *p1 = (cb_peer_id *) rhs;

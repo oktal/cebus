@@ -39,7 +39,6 @@ void* cb_thread_join(cb_thread* thread)
     return result;
 }
 
-void cb_thread_free(cb_thread* thread)
+void cb_thread_destroy(cb_thread* thread)
 {
-    free(thread);
 }

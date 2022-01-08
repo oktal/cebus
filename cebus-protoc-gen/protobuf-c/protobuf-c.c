@@ -45,6 +45,7 @@
  * \todo Use size_t consistently.
  */
 
+#include <stdio.h>
 #include <stdlib.h>	/* for malloc, free */
 #include <string.h>	/* for strcmp, strlen, memcpy, memmove, memset */
 
@@ -81,7 +82,11 @@
 #define MAX_UINT64_ENCODED_SIZE		10
 
 #ifndef PROTOBUF_C_UNPACK_ERROR
-# define PROTOBUF_C_UNPACK_ERROR(...)
+# define VA_ARGS(...) , ##__VA_ARGS__
+# define PROTOBUF_C_UNPACK_ERROR(str, ...) do { \
+    fprintf(stderr, str VA_ARGS(__VA_ARGS__)); \
+    fprintf(stderr, "\n"); \
+} while(0)
 #endif
 
 #if !defined(_WIN32) || !defined(PROTOBUF_C_USE_SHARED_LIB)

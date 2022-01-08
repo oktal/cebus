@@ -10,6 +10,11 @@ void message_type_id_set(message_type_id* type_id, const char* value)
     strncpy(type_id->value, value, CEBUS_STR_MAX);
 }
 
+cebus_bool message_type_id_equal(const message_type_id* type_id, const char* value)
+{
+    return cebus_bool_from_int(!strncmp(type_id->value, value, CEBUS_STR_MAX));
+}
+
 MessageTypeId* message_type_id_proto_new(const message_type_id* type_id)
 {
     MessageTypeId* proto = cebus_alloc(sizeof *proto);

@@ -3,10 +3,10 @@
 #include "cebus/peer_id.h"
 #include "cebus/cebus_bool.h"
 
+#include "cebus/transport/zmq.h"
 #include "cebus/transport/zmq_socket_options.h"
-#include "cebus/utils/time.h"
 
-#include <czmq.h>
+#include "cebus/utils/time.h"
 
 typedef enum cb_cb_zmq_outbound_socket_error
 {
@@ -61,15 +61,14 @@ typedef struct cb_zmq_outbound_socket
     cb_peer_id peer_id;
     char endpoint[CEBUS_STR_MAX];
 
-    int cb_zmq_error;
-
+    int zmq_error;
     cb_zmq_socket_options options;
 
     size_t failed_send_count;
     time_instant close_cooldown_timer;
 } cb_zmq_outbound_socket;
 
-/// Create a new ZMQ outbound socket. Return `NULL` on failure
+/// Create a new 0MQ outbound socket. Return `NULL` on failure
 cb_zmq_outbound_socket *cb_zmq_outbound_socket_new(void* context, const cb_peer_id* peer_id, const char* endpoint, cb_zmq_socket_options options);
 
 /// Connect the socket to the configured endpoint.

@@ -1,18 +1,12 @@
 #include "cebus/transport/zmq_outbound_socket.h"
 
+#include "cebus/alloc.h"
+
 #include <string.h>
 
-#define CB_ZMQ_SETSOCKOPT_TRY(socket, option_name, option)                    \
-    do {                                                                      \
-        if (zmq_setsockopt(socket, option_name, &option, sizeof(option)) < 0) \
-            return -1;                                                        \
-    } while (0)
-
-static int cb_zmq_outbound_socket_set_options(cb_zmq_outbound_socket* socket)
+static int cb_zmq_outbound_socket_set_options(zsock_t* sock, const cb_zmq_socket_options* options)
 {
-    const cb_zmq_socket_options* options = &socket->options;
-    zsock_t* sock                     = socket->sock;
-    const uint64_t send_timeout_ms    = (int) timespan_as_millis(options->send_timeout);
+    const int send_timeout_ms       = (int) timespan_as_millis(options->send_timeout);
 
     CB_ZMQ_SETSOCKOPT_TRY(sock, ZMQ_SNDHWM  , options->send_high_watermark);
     CB_ZMQ_SETSOCKOPT_TRY(sock, ZMQ_SNDTIMEO, send_timeout_ms);
@@ -33,8 +27,7 @@ static int cb_zmq_outbound_socket_set_options(cb_zmq_outbound_socket* socket)
 static void cb_zmq_outbound_socket_send_failure(cb_zmq_outbound_socket* socket, int rc)
 {
     assert(socket->state == cb_zmq_outbound_socket_state_established);
-
-    socket->cb_zmq_error = rc;
+    socket->zmq_error = rc;
 
     if (socket->failed_send_count >= socket->options.send_retries_before_switching_to_closed_state)
     {
@@ -64,28 +57,27 @@ static cebus_bool cb_zmq_outbound_socket_can_send(cb_zmq_outbound_socket* socket
     return cebus_false;
 }
 
-cb_zmq_outbound_socket* outbound_socket_new(
+cb_zmq_outbound_socket* cb_zmq_outbound_socket_new(
         void* context,
         const cb_peer_id* peer_id,
         const char* endpoint,
         cb_zmq_socket_options options)
 {
-    cb_zmq_outbound_socket* socket = malloc(sizeof *socket);
-    if (socket == NULL)
-        return NULL;
+    cb_zmq_outbound_socket* socket = cb_alloc(cb_zmq_outbound_socket, 1);
 
-    socket->context = context;
-    socket->sock    = NULL;
+    socket->context   = context;
+    socket->sock      = NULL;
+    socket->zmq_error = 0;
 
     cb_peer_id_set(&socket->peer_id, peer_id->value);
-    strncpy(socket->endpoint, endpoint, CEBUS_STR_MAX);
+    strncpy(socket->endpoint, endpoint, CEBUS_ENDPOINT_MAX);
 
     socket->state = cb_zmq_outbound_socket_state_closed;
     socket->options = options;
     return socket;
 }
 
-cb_zmq_outbound_socket_error outbound_socket_connect(cb_zmq_outbound_socket* socket)
+cb_zmq_outbound_socket_error cb_zmq_outbound_socket_connect(cb_zmq_outbound_socket* socket)
 {
     int rc;
     if (socket->sock == NULL)
@@ -94,8 +86,11 @@ cb_zmq_outbound_socket_error outbound_socket_connect(cb_zmq_outbound_socket* soc
         if (sock == NULL)
             return cb_zmq_outbound_socket_error_sock_create;
 
-        if (cb_zmq_outbound_socket_set_options(socket) < 0)
+        if ((rc = cb_zmq_outbound_socket_set_options(sock, &socket->options)) < 0)
+        {
+            socket->zmq_error = errno;
             return cb_zmq_outbound_socket_error_sock_options;
+        }
 
         socket->sock = sock;
     }
@@ -103,17 +98,16 @@ cb_zmq_outbound_socket_error outbound_socket_connect(cb_zmq_outbound_socket* soc
     rc = zmq_connect(socket->sock, socket->endpoint);
     if (rc < 0)
     {
-        socket->cb_zmq_error = rc;
+        socket->zmq_error = errno;
         return cb_zmq_outbound_socket_error_connect;
     }
 
     socket->state = cb_zmq_outbound_socket_state_established;
-    socket->cb_zmq_error = 0;
     socket->failed_send_count = 0;
     return cb_zmq_outbound_socket_ok;
 }
 
-cb_zmq_outbound_socket_error outbound_socket_disconnect(cb_zmq_outbound_socket* socket)
+cb_zmq_outbound_socket_error cb_zmq_outbound_socket_disconnect(cb_zmq_outbound_socket* socket)
 {
     int rc;
     int linger = 0;
@@ -131,7 +125,7 @@ cb_zmq_outbound_socket_error outbound_socket_disconnect(cb_zmq_outbound_socket* 
     rc = zmq_close(socket->sock);
     if (rc < 0)
     {
-        socket->cb_zmq_error = rc;
+        socket->zmq_error = rc;
         return cb_zmq_outbound_socket_error_close;
     }
 
@@ -140,7 +134,7 @@ cb_zmq_outbound_socket_error outbound_socket_disconnect(cb_zmq_outbound_socket* 
     return cb_zmq_outbound_socket_ok;
 }
 
-cb_zmq_outbound_socket_error outbound_socket_send(cb_zmq_outbound_socket *socket, const void* data, size_t size)
+cb_zmq_outbound_socket_error cb_zmq_outbound_socket_send(cb_zmq_outbound_socket *socket, const void* data, size_t size)
 {
     int rc;
 
@@ -158,7 +152,7 @@ cb_zmq_outbound_socket_error outbound_socket_send(cb_zmq_outbound_socket *socket
     if (rc == 0)
         return cb_zmq_outbound_socket_ok;
 
-    socket->cb_zmq_error = rc;
+    socket->zmq_error = rc;
     cb_zmq_outbound_socket_send_failure(socket, rc);
 
     return cb_zmq_outbound_socket_error_send;

@@ -1,8 +1,6 @@
 #pragma once
 
-#include "cebus/proto_types.h"
 #include "message_id.pb-c.h"
-
 #include <uuid/uuid.h>
 
 typedef struct message_id

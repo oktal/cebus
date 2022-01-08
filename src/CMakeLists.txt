@@ -23,6 +23,7 @@ set(cebus_SRC
     binding_key.c
     hash_map.c
     hasher.c
+    log.c
     message_context.c
     message_id.c
     message_type_id.c
@@ -32,6 +33,8 @@ set(cebus_SRC
     timespan.c
     threading.c
     transport_message.c
+
+    zmq_inbound_socket.c
     zmq_outbound_socket.c
     zmq_socket_options.c
     zmq_transport.c
@@ -57,4 +60,4 @@ target_include_directories(cebus
 )
 
 target_link_directories(cebus PUBLIC ${DEPS_ROOT}/lib)
-target_link_libraries(cebus PUBLIC czmq protobuf-cebus)
+target_link_libraries(cebus PUBLIC protobuf-cebus czmq zmq pthread uuid)

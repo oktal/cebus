@@ -60,7 +60,7 @@ cb_transport_message* cb_to_transport_message(
     return message;
 }
 
-TransportMessage* transport_message_proto_new(const cb_transport_message* message)
+TransportMessage* cb_transport_message_proto_new(const cb_transport_message* message)
 {
     TransportMessage* proto = cebus_alloc(sizeof *proto);
     transport_message__init(proto);
@@ -77,7 +77,7 @@ TransportMessage* transport_message_proto_new(const cb_transport_message* messag
     return proto;
 }
 
-void transport_message_proto_free(TransportMessage* proto)
+void cb_transport_message_proto_free(TransportMessage* proto)
 {
     message_id_proto_free(proto->id);
     message_type_id_proto_free(proto->message_type_id);

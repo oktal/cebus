@@ -7,7 +7,7 @@ message OriginatorInfo {
 
     required string sender_endpoint = 2;
 
-    required string sender_machine = 3;
+    optional string sender_machine = 3;
 
-    required string initiator_user_name = 4;
+    optional string initiator_user_name = 4;
 }

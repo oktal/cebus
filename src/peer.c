@@ -19,6 +19,7 @@ Peer* cb_peer_proto_new(const cb_peer* peer)
     Peer* proto = cebus_alloc(sizeof *proto);
     peer__init(proto);
     proto->id = cb_peer_id_proto_new(&peer->peer_id);
+    proto->endpoint = strdup(peer->endpoint);
 
     return proto;
 }
@@ -29,5 +30,6 @@ void cb_peer_proto_free(Peer* peer)
         return;
 
     free(peer->id);
+    free(peer->endpoint);
     free(peer);
 }

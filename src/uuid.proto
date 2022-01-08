@@ -1,5 +1,6 @@
 syntax = "proto2";
 
 message Uuid {
-    required bytes value = 1;
+    required fixed64 lo = 1;
+    required fixed64 hi = 2;
 }

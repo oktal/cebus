@@ -7,24 +7,19 @@
 
 static Uuid* uuid_proto_new(const uuid_t uuid)
 {
-    static const size_t UUID_LEN = sizeof(uuid_t);
-
     Uuid* proto = cebus_alloc(sizeof *proto);
     uuid__init(proto);
 
-    proto->value.data = cebus_alloc(UUID_LEN);
-    memcpy(proto->value.data, uuid, UUID_LEN);
-    proto->value.len = UUID_LEN;
+    memcpy(&proto->hi, uuid, 8);
+    memcpy(&proto->lo, uuid + 8, 8);
 
     return proto;
 }
 
 static void uuid_proto_free(Uuid* uuid)
 {
-    free(uuid->value.data);
     free(uuid);
 }
-
 
 void message_id_next(message_id* message_id)
 {

@@ -25,7 +25,7 @@ typedef struct cb_transport_message
 } cb_transport_message;
 
 void* cb_pack_message(const ProtobufCMessage* proto, size_t *size_out);
-cb_transport_message* to_transport_message(
+cb_transport_message* cb_to_transport_message(
         const ProtobufCMessage* message,
         const cb_peer_id* peer_id,
         const char* sender_endpoint,
