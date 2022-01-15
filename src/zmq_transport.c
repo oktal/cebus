@@ -32,7 +32,7 @@ static void transport_message_print(const cb_transport_message* message, FILE* o
     const originator_info* originator = &message->originator;
 
     char uuid[36];
-    uuid_unparse(message->id.value, uuid);
+    cb_uuid_print(&message->id.value, uuid, sizeof(uuid));
 
     fprintf(out, "TransportMessage { id = %s, type_id = %s, originator = { sender_id = %s, sender_endpoint = %s, sender_machiine = %s, initiator_user_name = %s }, data = %p, size = %zu }\n",
             uuid, message->message_type_id.value, originator->sender_id.value, originator->sender_endpoint, originator->sender_machine, originator->initiator_user_name, message->data, message->n_data);
@@ -170,7 +170,6 @@ static void cb_zmq_transport_handle_message(cb_zmq_transport* transport, const T
             if (transport->on_message != NULL)
                 transport->on_message(message);
         }
-
     }
 }
 
@@ -222,13 +221,13 @@ static void* cb_zmq_transport_outbound_loop(void* arg)
     {
         cb_zmq_outbound_action* node;
 
-        pthread_mutex_lock(&transport->outbound_action_mutex);
-        pthread_cond_wait(&transport->outbound_action_cond, &transport->outbound_action_mutex);
+        cb_mutex_lock(&transport->outbound_action_mutex);
+        cb_cond_wait(&transport->outbound_action_cond, &transport->outbound_action_mutex);
 
         node = transport->outbound_action_head;
         transport->outbound_action_head = NULL;
 
-        pthread_mutex_unlock(&transport->outbound_action_mutex);
+        cb_mutex_unlock(&transport->outbound_action_mutex);
 
         while (node != NULL)
         {
@@ -248,13 +247,13 @@ static void cb_zmq_transport_outbound_push(cb_zmq_transport* transport, cb_zmq_o
     action->callback = callback;
     action->data = data;
 
-    pthread_mutex_lock(&transport->outbound_action_mutex);
+    cb_mutex_lock(&transport->outbound_action_mutex);
 
     action->next = transport->outbound_action_head;
     transport->outbound_action_head = action;
 
-    pthread_cond_signal(&transport->outbound_action_cond);
-    pthread_mutex_unlock(&transport->outbound_action_mutex);
+    cb_mutex_unlock(&transport->outbound_action_mutex);
+    cb_cond_signal(&transport->outbound_action_cond);
 }
 
 cb_peer_list* cb_peer_list_new()
@@ -343,7 +342,6 @@ cb_zmq_transport_error cb_zmq_transport_start(cb_zmq_transport* transport)
     }
 
     transport->socket = inbound_socket;
-    printf("Bound to %s\n", endpoint);
 
     if ((threadrc = cb_thread_spawn(&transport->inbound_thread, cb_zmq_transport_inbound_loop, transport)) == cebus_false)
     {
@@ -356,6 +354,10 @@ cb_zmq_transport_error cb_zmq_transport_start(cb_zmq_transport* transport)
         rc = cb_zmq_transport_error_start_outbound;
         goto error;
     }
+
+    transport->outbound_action_head = NULL;
+    cb_mutex_init(&transport->outbound_action_mutex);
+    cb_cond_init(&transport->outbound_action_cond);
 
     transport->zmq_context = context;
     return cb_zmq_transport_ok;
@@ -377,6 +379,14 @@ error:
 cb_zmq_transport_error cb_zmq_transport_stop(cb_zmq_transport* transport)
 {
     return cb_zmq_transport_ok;
+}
+
+const char* cb_zmq_transport_inbound_endpoint(const cb_zmq_transport* transport)
+{
+    if (transport->socket == NULL)
+        return NULL;
+
+    return cb_zmq_inbound_socket_endpoint(transport->socket);
 }
 
 cb_zmq_transport_error cb_zmq_transport_send(

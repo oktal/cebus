@@ -3,6 +3,7 @@
 #include <czmq.h>
 
 #include "cebus/alloc.h"
+#include "cebus/log.h"
 #include "cebus/peer.h"
 #include "cebus/peer_id.h"
 #include "cebus/transport_message.h"
@@ -42,10 +43,10 @@ RegisterPeerCommand* register_peer_command_new(const cb_peer* peer)
     return command;
 }
 
-void register_directory(cb_zmq_transport* transport,  cb_peer* self, const char* endpoint, const char* environment)
+void register_directory(cb_time_uuid_gen* gen, cb_zmq_transport* transport,  cb_peer* self, const char* endpoint, const char* environment)
 {
     RegisterPeerCommand* register_command = register_peer_command_new(self);
-    cb_transport_message* transport_message = cb_to_transport_message((const ProtobufCMessage *)register_command, &self->peer_id, self->endpoint, environment, "Abc.Zebus.Directory");
+    cb_transport_message* transport_message = cb_to_transport_message((const ProtobufCMessage *)register_command, gen, &self->peer_id, self->endpoint, environment, "Abc.Zebus.Directory");
 
     cb_peer_list* directory_peers = cb_peer_list_new();
     cb_peer* directory_peer = cb_alloc(cb_peer, 1);
@@ -69,6 +70,10 @@ int main(int argc, const char* argv[])
     cb_zmq_transport_error rc;
     cb_peer* self;
 
+    cb_time_uuid_gen uuid_gen;
+    if (cb_time_uuid_gen_init_random(&uuid_gen) == cebus_false)
+        fprintf(stderr, "Failed to initialize uuid generator\n");
+
     if (argc < 4)
     {
         fprintf(stderr, "usage ./cebus [directory-endpoint] [endpoint] [environment]\n");
@@ -82,17 +87,21 @@ int main(int argc, const char* argv[])
 
     transport = cb_zmq_transport_new(configuration, options, NULL);
     cb_zmq_transport_configure(transport, &my_peer, argv[3]);
+    CB_LOG_DBG(CB_LOG_LEVEL_INFO, "Starting 0MQ transport ...");
     if ((rc = cb_zmq_transport_start(transport)) != cb_zmq_transport_ok)
     {
         fprintf(stderr, "Error starting transport: %d\n", rc);
         return -1;
     }
+    CB_LOG_DBG(CB_LOG_LEVEL_INFO, "... 0MQ transport started");
 
     self = cb_alloc(cb_peer, 1);
-    cb_peer_set_endpoint(self, argv[2]);
+    cb_peer_set_endpoint(self, cb_zmq_transport_inbound_endpoint(transport));
     cb_peer_id_set(&self->peer_id, my_peer.value);
 
-    register_directory(transport, self, argv[1], argv[3]);
+    CB_LOG_DBG(CB_LOG_LEVEL_INFO, "Registering to directory ...");
+
+    register_directory(&uuid_gen, transport, self, argv[1], argv[3]);
 
     getchar();
 

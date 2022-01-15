@@ -9,6 +9,12 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 include(CTest)
 
 option(CEBUS_BUILD_TESTS "Build tests" OFF)
+option(CEBUS_THREAD_C11 "Use C11 threading library support" ON)
+option(CEBUS_THREAD_POSIX "Use posix threading library" OFF)
+
+if (CEBUS_THREAD_C11 AND CEBUS_THREAD_POSIX)
+    message(FATAL_ERROR "CEBUS_THREAD_C11 and CEBUS_THREAD_POSIX can not be both enabled at the same time")
+endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")

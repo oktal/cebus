@@ -3,6 +3,7 @@ include(ProtobufCebus)
 # Generate protobuf files
 
 set(cebus_PROTOS
+    bcl.proto
     binding_key.proto
     message_id.proto
     message_type_id.proto
@@ -20,6 +21,7 @@ protobuf_generate_c(PROTO_SRCS PROTO_HDRS PROTOS ${cebus_PROTOS})
 
 set(cebus_SRC
     alloc.c
+    atomic_c11.c
     binding_key.c
     hash_map.c
     hasher.c
@@ -30,9 +32,12 @@ set(cebus_SRC
     originator_info.c
     peer.c
     peer_id.c
+    random.c
+    time.c
     timespan.c
     threading.c
     transport_message.c
+    uuid.c
 
     zmq_inbound_socket.c
     zmq_outbound_socket.c
@@ -40,6 +45,10 @@ set(cebus_SRC
     zmq_transport.c
 
     $<$<PLATFORM_ID:Linux>:time_unix.c>
+
+    threading.c
+    $<$<BOOL:${CEBUS_THREAD_C11}>:threading_c11.c>
+    $<$<BOOL:${CEBUS_THREAD_POSIX}>:threading_posix.c>
 )
 
 
@@ -58,6 +67,17 @@ target_include_directories(cebus
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+if (CEBUS_THREAD_C11)
+    message(STATUS "Enabling C11 threading support")
+    target_compile_definitions(cebus PUBLIC CEBUS_THREAD_C11)
+elseif (CEBUS_THREAD_POSIX)
+    message(STATUS "Enabling POSIX threading support")
+    target_compile_definitions(cebus PUBLIC CEBUS_THREAD_POSIX)
+else()
+    message(STATUS "Enabling C11 threading support")
+    target_compile_definitions(cebus PUBLIC CEBUS_THREAD_C11)
+endif()
 
 target_link_directories(cebus PUBLIC ${DEPS_ROOT}/lib)
 target_link_libraries(cebus PUBLIC protobuf-cebus czmq zmq pthread uuid)

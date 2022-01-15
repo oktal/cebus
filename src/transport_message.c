@@ -32,10 +32,7 @@ void* cb_pack_message(const ProtobufCMessage* proto, size_t *size_out)
     return buf;
 }
 
-static void cb_set_originator_info(
-        originator_info* originator,
-        const cb_peer_id* peer_id,
-        const char* sender_endpoint)
+static void cb_set_originator_info(originator_info* originator, const cb_peer_id* peer_id, const char* sender_endpoint)
 {
     originator_info_set_sender_id(originator, peer_id);
     originator_info_set_sender_endpoint(originator, sender_endpoint);
@@ -45,13 +42,14 @@ static void cb_set_originator_info(
 
 cb_transport_message* cb_to_transport_message(
         const ProtobufCMessage* proto,
+        cb_time_uuid_gen* uuid_gen,
         const cb_peer_id* peer_id,
         const char* sender_endpoint,
         const char* environment,
         const char* namespace)
 {
     cb_transport_message* message = cebus_alloc(sizeof* message);
-    message_id_next(&message->id);
+    cb_message_id_next(&message->id, uuid_gen);
     cb_transport_set_message_type_id_from_proto(message, proto, namespace);
     strncpy(message->environment, environment, CEBUS_STR_MAX);
     message->data = cb_pack_message(proto, &message->n_data);
@@ -65,7 +63,7 @@ TransportMessage* cb_transport_message_proto_new(const cb_transport_message* mes
     TransportMessage* proto = cebus_alloc(sizeof *proto);
     transport_message__init(proto);
 
-    proto->id = message_id_proto_new(&message->id);
+    proto->id = cb_message_id_proto_new(&message->id);
     proto->message_type_id = message_type_id_proto_new(&message->message_type_id);
     proto->content_bytes.data = cebus_alloc(message->n_data);
     memcpy(proto->content_bytes.data, message->data, message->n_data);
@@ -79,7 +77,7 @@ TransportMessage* cb_transport_message_proto_new(const cb_transport_message* mes
 
 void cb_transport_message_proto_free(TransportMessage* proto)
 {
-    message_id_proto_free(proto->id);
+    cb_message_id_proto_free(proto->id);
     message_type_id_proto_free(proto->message_type_id);
     free(proto->content_bytes.data);
     originator_info_proto_free(proto->originator);

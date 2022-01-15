@@ -2,15 +2,15 @@
 
 #include "munit.h"
 
-#define CEBUS_TEST_MAIN(suite)                             \
-    int main(int argc, const char* argv[])                 \
-    {                                                      \
-        return munit_suite_main(&suite, NULL, argc, argv); \
+#define CEBUS_TEST_MAIN(suite)                                      \
+    int main(int argc, char* const argv[])                          \
+    {                                                               \
+        return munit_suite_main(&suite, NULL, argc, argv);          \
     }
 
 #define CEBUS_TEST(func)         \
     {                            \
-        #func,                   \
+        "/"#func,                \
         func,                    \
         NULL,                    \
         NULL,                    \

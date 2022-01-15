@@ -12,7 +12,7 @@
 
 typedef struct cb_transport_message
 {
-    message_id id;
+    cb_message_id id;
     message_type_id message_type_id;
     originator_info originator;
 
@@ -25,8 +25,10 @@ typedef struct cb_transport_message
 } cb_transport_message;
 
 void* cb_pack_message(const ProtobufCMessage* proto, size_t *size_out);
+
 cb_transport_message* cb_to_transport_message(
         const ProtobufCMessage* message,
+        cb_time_uuid_gen* uuid_gen,
         const cb_peer_id* peer_id,
         const char* sender_endpoint,
         const char* environment,

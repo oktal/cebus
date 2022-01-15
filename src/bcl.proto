@@ -1,0 +1,55 @@
+// The types in here indicate how protobuf-net represents certain types when using protobuf-net specific
+// library features. Note that it is not *required* to use any of these types, and cross-platform code
+// should usually avoid them completely (ideally starting from a .proto schema)
+
+// Some of these are ugly, sorry. The TimeSpan / DateTime dates here pre-date the introduction of Timestamp
+// and Duration, and the "well known" types should be preferred when possible. Guids are particularly
+// awkward - it turns out that there are multiple guid representations, and I accidentally used one that
+// I can only call... "crazy-endian". Just make sure you check the order!
+
+// It should not be necessary to use bcl.proto from code that uses protobuf-net
+
+syntax = "proto2";
+
+package bcl;
+
+message TimeSpan {
+  optional sint64 value = 1; // the size of the timespan (in units of the selected scale)
+  optional TimeSpanScale scale = 2; // the scale of the timespan [default = DAYS]
+  enum TimeSpanScale {
+    DAYS = 0;
+    HOURS = 1;
+    MINUTES = 2;
+    SECONDS = 3;
+    MILLISECONDS = 4;
+	TICKS = 5;
+
+    MINMAX = 15; // dubious
+  }
+}
+
+message DateTime {
+  optional sint64 value = 1; // the offset (in units of the selected scale) from 1970/01/01
+  optional TimeSpanScale scale = 2; // the scale of the timespan [default = DAYS]
+  enum TimeSpanScale {
+    DAYS = 0;
+    HOURS = 1;
+    MINUTES = 2;
+    SECONDS = 3;
+    MILLISECONDS = 4;
+	TICKS = 5;
+
+    MINMAX = 15; // dubious
+  }
+}
+
+message Guid {
+  required fixed64 lo = 1; // the first 8 bytes of the guid (note:crazy-endian)
+  required fixed64 hi = 2; // the second 8 bytes of the guid (note:crazy-endian)
+}
+
+message Decimal {
+  optional uint64 lo = 1; // the first 64 bits of the underlying value
+  optional uint32 hi = 2; // the last 32 bis of the underlying value
+  optional uint32 signScale = 3; // the number of decimal digits (bits 1-16), and the sign (bit 0)
+}

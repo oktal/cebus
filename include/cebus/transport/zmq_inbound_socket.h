@@ -20,6 +20,9 @@ typedef enum cb_zmq_inbound_socket_error
     /// An error occurend when setting the socket options
     cb_zmq_inbound_socket_error_sock_options,
 
+    /// The endpoint that has been bound by 0MQ is too large
+    cb_zmq_inbound_socket_error_endpoint_too_large,
+
     /// An error occured while attempting to bind the 0MQ socket to the configured endpoint
     cb_zmq_inbound_socket_error_bind,
 
@@ -41,6 +44,9 @@ typedef struct cb_zmq_inbound_socket
     /// The endpoint to bind to
     char endpoint[CEBUS_ENDPOINT_MAX];
 
+    /// The endpoint that has been bound to by 0MQ
+    char zmq_endpoint[CEBUS_ENDPOINT_MAX];
+
     /// The ID of our peer
     cb_peer_id peer_id; 
 
@@ -58,6 +64,9 @@ cb_zmq_inbound_socket* cb_zmq_inbound_socket_new(
 /// Bind the underlying 0MQ `socket` to the configured endpoint
 /// Return `cb_zmq_inbound_socket_error_ok` if success or a `cb_inbound_socket_error` if failure
 cb_zmq_inbound_socket_error cb_zmq_inbound_socket_bind(cb_zmq_inbound_socket* socket);
+
+/// Get the underlying 0MQ endpoint
+const char* cb_zmq_inbound_socket_endpoint(const cb_zmq_inbound_socket* socket);
 
 /// Close the underlying 0MQ `socket`
 /// Return `cb_zmq_inbound_socket_error_ok` if success or a `cb_inbound_socket_error` if failure

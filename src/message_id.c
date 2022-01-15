@@ -5,38 +5,40 @@
 #include <stdlib.h>
 #include <string.h>
 
-static Uuid* uuid_proto_new(const uuid_t uuid)
+static Bcl__Guid* cb_guid_proto_new(const cb_uuid_t* uuid)
 {
-    Uuid* proto = cebus_alloc(sizeof *proto);
-    uuid__init(proto);
+    const size_t BCL_GUID_BYTES = 8;
 
-    memcpy(&proto->hi, uuid, 8);
-    memcpy(&proto->lo, uuid + 8, 8);
+    Bcl__Guid* proto = cebus_alloc(sizeof *proto);
+    bcl__guid__init(proto);
+
+    memcpy(&proto->hi, uuid->bits, BCL_GUID_BYTES);
+    memcpy(&proto->lo, uuid->bits + BCL_GUID_BYTES, BCL_GUID_BYTES);
 
     return proto;
 }
 
-static void uuid_proto_free(Uuid* uuid)
+static void cb_guid_proto_free(Bcl__Guid* guid)
 {
-    free(uuid);
+    free(guid);
 }
 
-void message_id_next(message_id* message_id)
+void cb_message_id_next(cb_message_id* message_id, cb_time_uuid_gen* gen)
 {
-    uuid_generate_time(message_id->value);
+    cb_uuid_generate_time(gen, &message_id->value);
 }
 
-MessageId* message_id_proto_new(const message_id* message_id)
+MessageId* cb_message_id_proto_new(const cb_message_id* message_id)
 {
     MessageId* proto = cebus_alloc(sizeof *proto);
     message_id__init(proto);
 
-    proto->value = uuid_proto_new(message_id->value);
+    proto->value = cb_guid_proto_new(&message_id->value);
     return proto;
 }
 
-void message_id_proto_free(MessageId* proto)
+void cb_message_id_proto_free(MessageId* proto)
 {
-    uuid_proto_free(proto->value);
+    cb_guid_proto_free(proto->value);
     free(proto);
 }

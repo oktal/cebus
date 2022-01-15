@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdlib.h>
 #include <stddef.h>
 
 #define cebus_alloc(size) cebus_alloc_safe(size, __FILE__, __LINE__)

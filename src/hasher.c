@@ -1,15 +1,11 @@
 #include "cebus/collection/hasher.h"
 #include "cebus/cebus_bool.h"
 
+#include "cebus/utils/random.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-
-#if defined(__linux__)
-  #include <sys/random.h>
-#else
-  #error "Platform not supported"
-#endif
   
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define ROT_LEFT(x, b) (uint64_t)(((x) << (b)) | ((x) >> (64 - (b))))
@@ -97,18 +93,10 @@ static void set_key_part_from_bytes(const void* bytes, uint64_t *key, size_t n)
     memcpy(key, bytes + (n * KEY_PART_LEN), KEY_PART_LEN);
 }
 
-#if defined(__linux__)
-static cebus_bool get_random_bytes(uint8_t* dst, size_t len)
-{
-    ssize_t res = getrandom(dst, len, GRND_NONBLOCK); 
-    return cebus_bool_from_int(res == 0);
-}
-#endif
-
 static void get_random_key(uint64_t* k0, uint64_t* k1)
 {
     uint8_t bytes[KEY_LEN];
-    get_random_bytes(bytes, KEY_LEN);
+    cb_get_random_bytes(bytes, KEY_LEN);
 
     set_key_part_from_bytes(bytes, k0, 0);
     set_key_part_from_bytes(bytes, k1, 1);
@@ -136,7 +124,6 @@ void cb_hasher_write(cb_hasher* hasher, const void* buf, size_t len)
             hasher->n_tail = 0;
         }
     }
-
 
     // Tail has been flushed, process input
     length = len - needed;

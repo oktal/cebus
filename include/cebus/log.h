@@ -4,7 +4,7 @@ typedef enum cb_log_level
 {
     cb_log_level_trace = 0,
     cb_log_level_debug,
-    cb_log_ievel_info,
+    cb_log_level_info,
     cb_log_level_warn,
     cb_log_level_error
 } cb_log_level;

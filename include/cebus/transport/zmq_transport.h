@@ -43,8 +43,9 @@ typedef struct cb_zmq_transport
     cb_thread inbound_thread;
     cb_thread outbound_thread;
 
-    pthread_mutex_t outbound_action_mutex;
-    pthread_cond_t outbound_action_cond;
+    cb_mutex_t outbound_action_mutex;
+    cb_cond_t outbound_action_cond;
+
     struct cb_zmq_outbound_action* outbound_action_head;
 
     cb_zmq_transport_on_message on_message;
@@ -74,6 +75,8 @@ void cb_zmq_transport_free(cb_zmq_transport* transport);
 
 cb_zmq_transport_error cb_zmq_transport_start(cb_zmq_transport* transport);
 cb_zmq_transport_error cb_zmq_transport_stop(cb_zmq_transport* transport);
+
+const char* cb_zmq_transport_inbound_endpoint(const cb_zmq_transport* transport);
 
 cb_zmq_transport_error cb_zmq_transport_send(
         cb_zmq_transport* transport, cb_transport_message* transport_message, cb_peer_list* peers);
