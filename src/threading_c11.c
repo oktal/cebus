@@ -32,7 +32,7 @@ int cb_thread_main(void* arg)
 
 cebus_bool cb_thread_spawn(cb_thread* thread, cb_thread_start start, void* arg)
 {
-    cb_thread_main_arg* main_arg = cebus_alloc(sizeof *main_arg);
+    cb_thread_main_arg* main_arg = cb_new(cb_thread_main_arg, 1);
 
     main_arg->start = start;
     main_arg->arg = arg;

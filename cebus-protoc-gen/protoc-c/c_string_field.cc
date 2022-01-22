@@ -60,42 +60,103 @@
 
 // Modified to implement C code by Dave Benson.
 
-#ifndef GOOGLE_PROTOBUF_COMPILER_C_STRING_FIELD_H__
-#define GOOGLE_PROTOBUF_COMPILER_C_STRING_FIELD_H__
+#include <protoc-c/c_string_field.h>
+#include <protoc-c/c_helpers.h>
 
-#include <map>
-#include <string>
+#include <google/protobuf/io/printer.h>
+#include <google/protobuf/wire_format.h>
 
-#include <protoc-cebus/c_field.h>
+#include <protobuf-c.pb.h>
 
 namespace google {
 namespace protobuf {
 namespace compiler {
 namespace c {
 
-class StringFieldGenerator : public FieldGenerator {
- public:
-  explicit StringFieldGenerator(const FieldDescriptor* descriptor);
-  ~StringFieldGenerator();
+using internal::WireFormat;
 
-  // implements FieldGenerator ---------------------------------------
-  void GenerateStructMembers(io::Printer* printer) const;
-  void GenerateDescriptorInitializer(io::Printer* printer) const;
-  void GenerateDefaultValueDeclarations(io::Printer* printer) const;
-  void GenerateDefaultValueImplementations(io::Printer* printer) const;
-  std::string GetDefaultValue(void) const;
-  void GenerateStaticInit(io::Printer* printer) const;
+void SetStringVariables(const FieldDescriptor* descriptor,
+                        std::map<std::string, std::string>* variables) {
+  (*variables)["name"] = FieldName(descriptor);
+  (*variables)["default"] = FullNameToLower(descriptor->full_name(), descriptor->file())
+	+ "__default_value";
+  (*variables)["deprecated"] = FieldDeprecated(descriptor);
+}
 
- private:
-  std::map<std::string, std::string> variables_;
+// ===================================================================
 
-  GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(StringFieldGenerator);
-};
+StringFieldGenerator::
+StringFieldGenerator(const FieldDescriptor* descriptor)
+  : FieldGenerator(descriptor) {
+  SetStringVariables(descriptor, &variables_);
+}
 
+StringFieldGenerator::~StringFieldGenerator() {}
+
+void StringFieldGenerator::GenerateStructMembers(io::Printer* printer) const
+{
+  const ProtobufCFileOptions opt = descriptor_->file()->options().GetExtension(pb_c_file);
+
+  switch (descriptor_->label()) {
+    case FieldDescriptor::LABEL_REQUIRED:
+    case FieldDescriptor::LABEL_OPTIONAL:
+      if (opt.const_strings())
+        printer->Print(variables_, "const ");
+      printer->Print(variables_, "char *$name$$deprecated$;\n");
+      break;
+    case FieldDescriptor::LABEL_REPEATED:
+      printer->Print(variables_, "size_t n_$name$$deprecated$;\n");
+      if (opt.const_strings())
+        printer->Print(variables_, "const ");
+      printer->Print(variables_, "char **$name$$deprecated$;\n");
+      break;
+  }
+}
+void StringFieldGenerator::GenerateDefaultValueDeclarations(io::Printer* printer) const
+{
+  printer->Print(variables_, "extern char $default$[];\n");
+}
+void StringFieldGenerator::GenerateDefaultValueImplementations(io::Printer* printer) const
+{
+  std::map<std::string, std::string> vars;
+  vars["default"] = variables_.find("default")->second;
+  vars["escaped"] = CEscape(descriptor_->default_value_string());
+  printer->Print(vars, "char $default$[] = \"$escaped$\";\n");
+}
+
+std::string StringFieldGenerator::GetDefaultValue(void) const
+{
+  return variables_.find("default")->second;
+}
+void StringFieldGenerator::GenerateStaticInit(io::Printer* printer) const
+{
+  std::map<std::string, std::string> vars;
+  const ProtobufCFileOptions opt = descriptor_->file()->options().GetExtension(pb_c_file);
+  if (descriptor_->has_default_value()) {
+    vars["default"] = GetDefaultValue();
+  } else if (FieldSyntax(descriptor_) == 2) {
+    vars["default"] = "NULL";
+  } else if (opt.const_strings()) {
+    vars["default"] = "(const char *)protobuf_c_empty_string";
+  } else {
+    vars["default"] = "(char *)protobuf_c_empty_string";
+  }
+  switch (descriptor_->label()) {
+    case FieldDescriptor::LABEL_REQUIRED:
+    case FieldDescriptor::LABEL_OPTIONAL:
+      printer->Print(vars, "$default$");
+      break;
+    case FieldDescriptor::LABEL_REPEATED:
+      printer->Print(vars, "0,NULL");
+      break;
+  }
+}
+void StringFieldGenerator::GenerateDescriptorInitializer(io::Printer* printer) const
+{
+  GenerateDescriptorInitializerGeneric(printer, false, "STRING", "NULL");
+}
 
 }  // namespace c
 }  // namespace compiler
 }  // namespace protobuf
-
 }  // namespace google
-#endif  // GOOGLE_PROTOBUF_COMPILER_C_STRING_FIELD_H__

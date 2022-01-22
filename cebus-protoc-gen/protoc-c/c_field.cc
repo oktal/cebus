@@ -60,13 +60,13 @@
 
 // Modified to implement C code by Dave Benson.
 
-#include <protoc-cebus/c_field.h>
-#include <protoc-cebus/c_primitive_field.h>
-#include <protoc-cebus/c_string_field.h>
-#include <protoc-cebus/c_bytes_field.h>
-#include <protoc-cebus/c_enum_field.h>
-#include <protoc-cebus/c_message_field.h>
-#include <protoc-cebus/c_helpers.h>
+#include <protoc-c/c_field.h>
+#include <protoc-c/c_primitive_field.h>
+#include <protoc-c/c_string_field.h>
+#include <protoc-c/c_bytes_field.h>
+#include <protoc-c/c_enum_field.h>
+#include <protoc-c/c_message_field.h>
+#include <protoc-c/c_helpers.h>
 
 #include <protobuf-c.pb.h>
 

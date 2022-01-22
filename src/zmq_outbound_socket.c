@@ -63,7 +63,7 @@ cb_zmq_outbound_socket* cb_zmq_outbound_socket_new(
         const char* endpoint,
         cb_zmq_socket_options options)
 {
-    cb_zmq_outbound_socket* socket = cb_alloc(cb_zmq_outbound_socket, 1);
+    cb_zmq_outbound_socket* socket = cb_new(cb_zmq_outbound_socket, 1);
 
     socket->context   = context;
     socket->sock      = NULL;

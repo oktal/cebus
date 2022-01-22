@@ -17,9 +17,9 @@ cebus_bool message_type_id_equal(const message_type_id* type_id, const char* val
 
 MessageTypeId* message_type_id_proto_new(const message_type_id* type_id)
 {
-    MessageTypeId* proto = cebus_alloc(sizeof *proto);
+    MessageTypeId* proto = cb_new(MessageTypeId, 1);
     message_type_id__init(proto);
-    proto->full_name = cebus_strdup(type_id->value);
+    proto->full_name = cb_strdup(type_id->value);
 
     return proto;
 }

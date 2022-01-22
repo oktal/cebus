@@ -9,7 +9,7 @@ static Bcl__Guid* cb_guid_proto_new(const cb_uuid_t* uuid)
 {
     const size_t BCL_GUID_BYTES = 8;
 
-    Bcl__Guid* proto = cebus_alloc(sizeof *proto);
+    Bcl__Guid* proto = cb_new(Bcl__Guid, 1);
     bcl__guid__init(proto);
 
     memcpy(&proto->hi, uuid->bits, BCL_GUID_BYTES);
@@ -30,7 +30,7 @@ void cb_message_id_next(cb_message_id* message_id, cb_time_uuid_gen* gen)
 
 MessageId* cb_message_id_proto_new(const cb_message_id* message_id)
 {
-    MessageId* proto = cebus_alloc(sizeof *proto);
+    MessageId* proto = cb_new(MessageId, 1);
     message_id__init(proto);
 
     proto->value = cb_guid_proto_new(&message_id->value);

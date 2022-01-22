@@ -57,7 +57,7 @@ static cb_zmq_outbound_socket* cb_zmq_transport_get_outbound_socket(cb_zmq_trans
 
         CB_LOG_DBG(CB_LOG_LEVEL_DEBUG, "Connected to peer %s (%s)", peer->peer_id.value, peer->endpoint);
 
-        peer_id = cb_alloc(cb_peer_id, 1);
+        peer_id = cb_new(cb_peer_id, 1);
         cb_peer_id_set(peer_id, peer->peer_id.value);
 
         cb_hash_insert(transport->outbound_sockets, peer_id, socket);
@@ -243,7 +243,7 @@ static void* cb_zmq_transport_outbound_loop(void* arg)
 
 static void cb_zmq_transport_outbound_push(cb_zmq_transport* transport, cb_zmq_outbound_action_callback callback, void* data)
 {
-    cb_zmq_outbound_action* action = cb_alloc(cb_zmq_outbound_action, 1);
+    cb_zmq_outbound_action* action = cb_new(cb_zmq_outbound_action, 1);
     action->callback = callback;
     action->data = data;
 
@@ -258,7 +258,7 @@ static void cb_zmq_transport_outbound_push(cb_zmq_transport* transport, cb_zmq_o
 
 cb_peer_list* cb_peer_list_new()
 {
-    cb_peer_list *list = cb_alloc(cb_peer_list, 1);
+    cb_peer_list *list = cb_new(cb_peer_list, 1);
     list->head = list->tail = NULL;
 
     return list;
@@ -266,7 +266,7 @@ cb_peer_list* cb_peer_list_new()
 
 void cb_peer_list_add(cb_peer_list* list, cb_peer* peer)
 {
-    cb_peer_entry *entry = cb_alloc(cb_peer_entry, 1);
+    cb_peer_entry *entry = cb_new(cb_peer_entry, 1);
     entry->peer = peer;
     entry->next = NULL;
     
@@ -299,7 +299,7 @@ void cb_peer_list_free(cb_peer_list* list)
 cb_zmq_transport* cb_zmq_transport_new(
         cb_zmq_transport_configuration configuration, cb_zmq_socket_options socket_options, cb_zmq_transport_on_message on_message)
 {
-    cb_zmq_transport* transport = cb_alloc(cb_zmq_transport, 1);
+    cb_zmq_transport* transport = cb_new(cb_zmq_transport, 1);
     cb_hash_map* outbound_sockets = cb_hash_map_new(cb_peer_id_hash, cb_peer_id_hash_eq);
 
     transport->configuration = configuration;
@@ -392,7 +392,7 @@ const char* cb_zmq_transport_inbound_endpoint(const cb_zmq_transport* transport)
 cb_zmq_transport_error cb_zmq_transport_send(
         cb_zmq_transport* transport, cb_transport_message* transport_message, cb_peer_list* peers)
 {
-    cb_zmq_outbound_action_send_info* info = cb_alloc(cb_zmq_outbound_action_send_info, 1);
+    cb_zmq_outbound_action_send_info* info = cb_new(cb_zmq_outbound_action_send_info, 1);
     info->transport = transport;
     info->message = transport_message;
     info->peers = peers;

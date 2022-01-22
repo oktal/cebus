@@ -60,32 +60,71 @@
 
 // Modified to implement C code by Dave Benson.
 
-#include <protoc-cebus/c_extension.h>
-#include <protoc-cebus/c_helpers.h>
+#include <protoc-c/c_message_field.h>
+#include <protoc-c/c_helpers.h>
 
 #include <google/protobuf/io/printer.h>
+#include <google/protobuf/wire_format.h>
 
 namespace google {
 namespace protobuf {
 namespace compiler {
 namespace c {
 
-ExtensionGenerator::ExtensionGenerator(const FieldDescriptor* descriptor,
-                                       const std::string& dllexport_decl)
-  : descriptor_(descriptor),
-    dllexport_decl_(dllexport_decl) {
+using internal::WireFormat;
+
+// ===================================================================
+
+MessageFieldGenerator::
+MessageFieldGenerator(const FieldDescriptor* descriptor)
+  : FieldGenerator(descriptor) {
 }
 
-ExtensionGenerator::~ExtensionGenerator() {}
+MessageFieldGenerator::~MessageFieldGenerator() {}
 
-void ExtensionGenerator::GenerateDeclaration(io::Printer* printer) {
+void MessageFieldGenerator::GenerateStructMembers(io::Printer* printer) const
+{
+  std::map<std::string, std::string> vars;
+  vars["name"] = FieldName(descriptor_);
+  vars["type"] = FullNameToC(descriptor_->message_type()->full_name(), descriptor_->message_type()->file());
+  vars["deprecated"] = FieldDeprecated(descriptor_);
+  switch (descriptor_->label()) {
+    case FieldDescriptor::LABEL_REQUIRED:
+    case FieldDescriptor::LABEL_OPTIONAL:
+      printer->Print(vars, "$type$ *$name$$deprecated$;\n");
+      break;
+    case FieldDescriptor::LABEL_REPEATED:
+      printer->Print(vars, "size_t n_$name$$deprecated$;\n");
+      printer->Print(vars, "$type$ **$name$$deprecated$;\n");
+      break;
+  }
 }
-
-void ExtensionGenerator::GenerateDefinition(io::Printer* printer) {
+std::string MessageFieldGenerator::GetDefaultValue(void) const
+{
+  /* XXX: update when protobuf gets support
+   *   for default-values of message fields.
+   */
+  return "NULL";
+}
+void MessageFieldGenerator::GenerateStaticInit(io::Printer* printer) const
+{
+  switch (descriptor_->label()) {
+    case FieldDescriptor::LABEL_REQUIRED:
+    case FieldDescriptor::LABEL_OPTIONAL:
+      printer->Print("NULL");
+      break;
+    case FieldDescriptor::LABEL_REPEATED:
+      printer->Print("0,NULL");
+      break;
+  }
+}
+void MessageFieldGenerator::GenerateDescriptorInitializer(io::Printer* printer) const
+{
+  std::string addr = "&" + FullNameToLower(descriptor_->message_type()->full_name(), descriptor_->message_type()->file()) + "__descriptor";
+  GenerateDescriptorInitializerGeneric(printer, false, "MESSAGE", addr);
 }
 
 }  // namespace c
 }  // namespace compiler
 }  // namespace protobuf
-
 }  // namespace google

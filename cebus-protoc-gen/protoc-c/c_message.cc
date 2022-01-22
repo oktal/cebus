@@ -64,10 +64,10 @@
 #include <map>
 #include <memory>
 
-#include <protoc-cebus/c_message.h>
-#include <protoc-cebus/c_enum.h>
-#include <protoc-cebus/c_extension.h>
-#include <protoc-cebus/c_helpers.h>
+#include <protoc-c/c_message.h>
+#include <protoc-c/c_enum.h>
+#include <protoc-c/c_extension.h>
+#include <protoc-c/c_helpers.h>
 
 #include <google/protobuf/io/printer.h>
 #include <google/protobuf/io/coded_stream.h>

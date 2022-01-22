@@ -60,71 +60,38 @@
 
 // Modified to implement C code by Dave Benson.
 
-#include <protoc-cebus/c_message_field.h>
-#include <protoc-cebus/c_helpers.h>
+#ifndef GOOGLE_PROTOBUF_COMPILER_C_PRIMITIVE_FIELD_H__
+#define GOOGLE_PROTOBUF_COMPILER_C_PRIMITIVE_FIELD_H__
 
-#include <google/protobuf/io/printer.h>
-#include <google/protobuf/wire_format.h>
+#include <map>
+#include <string>
+
+#include <protoc-c/c_field.h>
 
 namespace google {
 namespace protobuf {
 namespace compiler {
 namespace c {
 
-using internal::WireFormat;
+class PrimitiveFieldGenerator : public FieldGenerator {
+ public:
+  explicit PrimitiveFieldGenerator(const FieldDescriptor* descriptor);
+  ~PrimitiveFieldGenerator();
 
-// ===================================================================
+  // implements FieldGenerator ---------------------------------------
+  void GenerateStructMembers(io::Printer* printer) const;
+  void GenerateDescriptorInitializer(io::Printer* printer) const;
+  std::string GetDefaultValue(void) const;
+  void GenerateStaticInit(io::Printer* printer) const;
 
-MessageFieldGenerator::
-MessageFieldGenerator(const FieldDescriptor* descriptor)
-  : FieldGenerator(descriptor) {
-}
+ private:
 
-MessageFieldGenerator::~MessageFieldGenerator() {}
-
-void MessageFieldGenerator::GenerateStructMembers(io::Printer* printer) const
-{
-  std::map<std::string, std::string> vars;
-  vars["name"] = FieldName(descriptor_);
-  vars["type"] = FullNameToC(descriptor_->message_type()->full_name(), descriptor_->message_type()->file());
-  vars["deprecated"] = FieldDeprecated(descriptor_);
-  switch (descriptor_->label()) {
-    case FieldDescriptor::LABEL_REQUIRED:
-    case FieldDescriptor::LABEL_OPTIONAL:
-      printer->Print(vars, "$type$ *$name$$deprecated$;\n");
-      break;
-    case FieldDescriptor::LABEL_REPEATED:
-      printer->Print(vars, "size_t n_$name$$deprecated$;\n");
-      printer->Print(vars, "$type$ **$name$$deprecated$;\n");
-      break;
-  }
-}
-std::string MessageFieldGenerator::GetDefaultValue(void) const
-{
-  /* XXX: update when protobuf gets support
-   *   for default-values of message fields.
-   */
-  return "NULL";
-}
-void MessageFieldGenerator::GenerateStaticInit(io::Printer* printer) const
-{
-  switch (descriptor_->label()) {
-    case FieldDescriptor::LABEL_REQUIRED:
-    case FieldDescriptor::LABEL_OPTIONAL:
-      printer->Print("NULL");
-      break;
-    case FieldDescriptor::LABEL_REPEATED:
-      printer->Print("0,NULL");
-      break;
-  }
-}
-void MessageFieldGenerator::GenerateDescriptorInitializer(io::Printer* printer) const
-{
-  std::string addr = "&" + FullNameToLower(descriptor_->message_type()->full_name(), descriptor_->message_type()->file()) + "__descriptor";
-  GenerateDescriptorInitializerGeneric(printer, false, "MESSAGE", addr);
-}
+  GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(PrimitiveFieldGenerator);
+};
 
 }  // namespace c
 }  // namespace compiler
 }  // namespace protobuf
+
 }  // namespace google
+#endif  // GOOGLE_PROTOBUF_COMPILER_C_PRIMITIVE_FIELD_H__

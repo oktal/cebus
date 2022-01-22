@@ -16,10 +16,10 @@ void cb_peer_set_endpoint(cb_peer* peer, const char* value)
 
 Peer* cb_peer_proto_new(const cb_peer* peer)
 {
-    Peer* proto = cebus_alloc(sizeof *proto);
+    Peer* proto = cb_new(Peer, 1);
     peer__init(proto);
     proto->id = cb_peer_id_proto_new(&peer->peer_id);
-    proto->endpoint = strdup(peer->endpoint);
+    proto->endpoint = cb_strdup(peer->endpoint);
 
     return proto;
 }

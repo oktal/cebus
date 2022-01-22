@@ -60,8 +60,8 @@
 
 // Modified to implement C code by Dave Benson.
 
-#include <protoc-cebus/c_primitive_field.h>
-#include <protoc-cebus/c_helpers.h>
+#include <protoc-c/c_primitive_field.h>
+#include <protoc-c/c_helpers.h>
 
 #include <google/protobuf/io/printer.h>
 #include <google/protobuf/wire_format.h>

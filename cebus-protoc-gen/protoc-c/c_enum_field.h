@@ -60,56 +60,40 @@
 
 // Modified to implement C code by Dave Benson.
 
-#ifndef GOOGLE_PROTOBUF_COMPILER_C_FILE_H__
-#define GOOGLE_PROTOBUF_COMPILER_C_FILE_H__
+#ifndef GOOGLE_PROTOBUF_COMPILER_C_ENUM_FIELD_H__
+#define GOOGLE_PROTOBUF_COMPILER_C_ENUM_FIELD_H__
 
-#include <memory>
+#include <map>
 #include <string>
-#include <vector>
-#include <google/protobuf/stubs/common.h>
-#include <protoc-cebus/c_field.h>
+
+#include <protoc-c/c_field.h>
 
 namespace google {
-namespace protobuf {
-  class FileDescriptor;        // descriptor.h
-  namespace io {
-    class Printer;             // printer.h
-  }
-}
-
 namespace protobuf {
 namespace compiler {
 namespace c {
 
-class EnumGenerator;           // enum.h
-class MessageGenerator;        // message.h
-class ServiceGenerator;        // service.h
-class ExtensionGenerator;      // extension.h
-
-class FileGenerator {
+class EnumFieldGenerator : public FieldGenerator {
  public:
-  // See generator.cc for the meaning of dllexport_decl.
-  explicit FileGenerator(const FileDescriptor* file,
-                         const std::string& dllexport_decl);
-  ~FileGenerator();
+  explicit EnumFieldGenerator(const FieldDescriptor* descriptor);
+  ~EnumFieldGenerator();
 
-  void GenerateHeader(io::Printer* printer);
-  void GenerateSource(io::Printer* printer);
+  // implements FieldGenerator ---------------------------------------
+  void GenerateStructMembers(io::Printer* printer) const;
+  void GenerateDescriptorInitializer(io::Printer* printer) const;
+  std::string GetDefaultValue(void) const;
+  void GenerateStaticInit(io::Printer* printer) const;
 
  private:
-  const FileDescriptor* file_;
+  std::map<std::string, std::string> variables_;
 
-  std::unique_ptr<std::unique_ptr<MessageGenerator>[]> message_generators_;
-  std::unique_ptr<std::unique_ptr<EnumGenerator>[]> enum_generators_;
-  std::unique_ptr<std::unique_ptr<ServiceGenerator>[]> service_generators_;
-  std::unique_ptr<std::unique_ptr<ExtensionGenerator>[]> extension_generators_;
-
-  GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(FileGenerator);
+  GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(EnumFieldGenerator);
 };
+
 
 }  // namespace c
 }  // namespace compiler
 }  // namespace protobuf
 
 }  // namespace google
-#endif  // GOOGLE_PROTOBUF_COMPILER_C_FILE_H__
+#endif  // GOOGLE_PROTOBUF_COMPILER_C_ENUM_FIELD_H__

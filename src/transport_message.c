@@ -26,7 +26,7 @@ void* cb_pack_message(const ProtobufCMessage* proto, size_t *size_out)
     if (size_out != NULL)
         *size_out = packed_size;
 
-    uint8_t* buf = cebus_alloc(packed_size * sizeof(*buf));
+    uint8_t* buf = cb_new(uint8_t, packed_size);
     protobuf_c_message_pack(proto, buf);
 
     return buf;
@@ -48,7 +48,7 @@ cb_transport_message* cb_to_transport_message(
         const char* environment,
         const char* namespace)
 {
-    cb_transport_message* message = cebus_alloc(sizeof* message);
+    cb_transport_message* message = cb_new(cb_transport_message, 1);
     cb_message_id_next(&message->id, uuid_gen);
     cb_transport_set_message_type_id_from_proto(message, proto, namespace);
     strncpy(message->environment, environment, CEBUS_STR_MAX);
@@ -60,16 +60,16 @@ cb_transport_message* cb_to_transport_message(
 
 TransportMessage* cb_transport_message_proto_new(const cb_transport_message* message)
 {
-    TransportMessage* proto = cebus_alloc(sizeof *proto);
+    TransportMessage* proto = cb_new(TransportMessage, 1);
     transport_message__init(proto);
 
     proto->id = cb_message_id_proto_new(&message->id);
     proto->message_type_id = message_type_id_proto_new(&message->message_type_id);
-    proto->content_bytes.data = cebus_alloc(message->n_data);
+    proto->content_bytes.data = cb_alloc(message->n_data);
     memcpy(proto->content_bytes.data, message->data, message->n_data);
     proto->content_bytes.len = message->n_data;
     proto->originator = originator_info_proto_new(&message->originator);
-    proto->environment = cebus_strdup(message->environment);
+    proto->environment = cb_strdup(message->environment);
     proto->was_persisted = !!message->was_persisted;
 
     return proto;

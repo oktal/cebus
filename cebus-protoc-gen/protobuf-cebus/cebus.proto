@@ -1,15 +1,19 @@
 syntax = "proto2";
 import "google/protobuf/descriptor.proto";
 
- enum MessageType {
+enum MessageType {
      Command = 0;
      Event = 1;
- }
+}
  
- message CebusMessageOptions {
-     required MessageType message_type = 1;
- }
+message CebusMessageOptions {
+    required MessageType message_type = 1;
+}
  
- extend google.protobuf.MessageOptions {
-     optional MessageType message_type = 10000;
- }
+extend google.protobuf.MessageOptions {
+    optional MessageType message_type = 10000;
+}
+
+extend google.protobuf.FieldOptions {
+    optional int32 routing_position = 10001;
+}

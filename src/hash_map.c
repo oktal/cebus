@@ -39,7 +39,7 @@ static void cb_hash_alloc_storage(cb_hash_map* map, size_t shift)
     size_t i;
     cb_hash_set_size(map, shift);
 
-    map->buckets = cb_alloc(cb_hash_bucket, map->size);
+    map->buckets = cb_new(cb_hash_bucket, map->size);
 
     for (i = 0; i < map->size; ++i)
     {
@@ -120,7 +120,7 @@ static void cb_hash_grow_if_needed(cb_hash_map* map)
 
 cb_hash_map* cb_hash_map_new(cb_hash_func hash_func, cb_hash_eq key_eq)
 {
-    cb_hash_map* map = cb_alloc(cb_hash_map, 1);
+    cb_hash_map* map = cb_new(cb_hash_map, 1);
     map->hash_func = hash_func;
     map->key_eq = key_eq;
 

@@ -1,35 +1,26 @@
 find_package(Threads REQUIRED)
 
-set(cebus_PROTOC_SRC
-    c_bytes_field.cc
-    c_enum.cc
-    c_enum_field.cc
-    c_extension.cc
-    c_field.cc
-    c_file.cc
-    c_generator.cc
-    c_helpers.cc
-    c_message.cc
-    c_message_field.cc
-    c_primitive_field.cc
-    c_service.cc
-    c_string_field.cc
+set(PROTOC_CEBUS_SRC
+    field_generator.cc
+    file_generator.cc
+    message_generator.cc
     main.cc
 )
 
-add_executable(cebus-protoc-gen ${cebus_PROTOC_SRC})
+add_executable(protoc-cebus-gen ${PROTOC_CEBUS_SRC})
+target_compile_features(protoc-cebus-gen PRIVATE cxx_std_17)
 
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} PATH)
-target_include_directories(cebus-protoc-gen
+target_include_directories(protoc-cebus-gen
     PUBLIC ${DEPS_ROOT}/include
     PRIVATE ${PARENT_DIR}
 )
 
-target_link_directories(cebus-protoc-gen PUBLIC ${DEPS_ROOT}/lib)
-target_link_libraries(cebus-protoc-gen
+target_link_directories(protoc-cebus-gen PUBLIC ${DEPS_ROOT}/lib)
+target_link_libraries(protoc-cebus-gen
   PRIVATE
-    protobuf-cebus
     protoc
-
+    protoc-c
+    protobuf-cebus
     Threads::Threads
 )

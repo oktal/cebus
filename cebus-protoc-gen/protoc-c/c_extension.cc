@@ -60,38 +60,32 @@
 
 // Modified to implement C code by Dave Benson.
 
-#ifndef GOOGLE_PROTOBUF_COMPILER_C_PRIMITIVE_FIELD_H__
-#define GOOGLE_PROTOBUF_COMPILER_C_PRIMITIVE_FIELD_H__
+#include <protoc-c/c_extension.h>
+#include <protoc-c/c_helpers.h>
 
-#include <map>
-#include <string>
-
-#include <protoc-cebus/c_field.h>
+#include <google/protobuf/io/printer.h>
 
 namespace google {
 namespace protobuf {
 namespace compiler {
 namespace c {
 
-class PrimitiveFieldGenerator : public FieldGenerator {
- public:
-  explicit PrimitiveFieldGenerator(const FieldDescriptor* descriptor);
-  ~PrimitiveFieldGenerator();
+ExtensionGenerator::ExtensionGenerator(const FieldDescriptor* descriptor,
+                                       const std::string& dllexport_decl)
+  : descriptor_(descriptor),
+    dllexport_decl_(dllexport_decl) {
+}
 
-  // implements FieldGenerator ---------------------------------------
-  void GenerateStructMembers(io::Printer* printer) const;
-  void GenerateDescriptorInitializer(io::Printer* printer) const;
-  std::string GetDefaultValue(void) const;
-  void GenerateStaticInit(io::Printer* printer) const;
+ExtensionGenerator::~ExtensionGenerator() {}
 
- private:
+void ExtensionGenerator::GenerateDeclaration(io::Printer* printer) {
+}
 
-  GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(PrimitiveFieldGenerator);
-};
+void ExtensionGenerator::GenerateDefinition(io::Printer* printer) {
+}
 
 }  // namespace c
 }  // namespace compiler
 }  // namespace protobuf
 
 }  // namespace google
-#endif  // GOOGLE_PROTOBUF_COMPILER_C_PRIMITIVE_FIELD_H__

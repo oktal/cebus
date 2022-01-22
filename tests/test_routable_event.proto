@@ -1,0 +1,12 @@
+syntax = "proto2";
+import "cebus.proto";
+
+message TestRoutableEvent {
+    option (message_type) = Event;
+
+    required string str_field = 1 [(routing_position) = 1];
+
+    required int32 int_field = 2 [(routing_position) = 3];
+
+    required bool bool_field = 3 [(routing_position) = 2];
+}

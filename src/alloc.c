@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void* cebus_alloc_safe(size_t size, const char* file, size_t line)
+void* cb_alloc_safe(size_t size, const char* file, size_t line)
 {
     void* p = malloc(size);
     if (p == NULL)
@@ -17,15 +17,14 @@ void* cebus_alloc_safe(size_t size, const char* file, size_t line)
     return p;
 }
 
-char* cebus_strndup(const char* s, size_t n)
+char* cb_strndup(const char* s, size_t n)
 {
-    char *dup = cebus_alloc(n);
+    char *dup = cb_alloc(n);
     strncpy(dup, s, n);
-
     return dup;
 }
 
-char *cebus_strdup(const char* s)
+char *cb_strdup(const char* s)
 {
-    return cebus_strndup(s, strlen(s));
+    return cb_strndup(s, strlen(s));
 }

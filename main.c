@@ -24,7 +24,7 @@ static uint64_t get_utc_now()
 
 PeerDescriptor* peer_descriptor_proto_new(const cb_peer* peer)
 {
-    PeerDescriptor* descriptor = cebus_alloc(sizeof* descriptor);
+    PeerDescriptor* descriptor = cb_new(PeerDescriptor, 1);
     peer_descriptor__init(descriptor);
 
     descriptor->peer = cb_peer_proto_new(peer);
@@ -36,7 +36,7 @@ PeerDescriptor* peer_descriptor_proto_new(const cb_peer* peer)
 
 RegisterPeerCommand* register_peer_command_new(const cb_peer* peer)
 {
-    RegisterPeerCommand* command = cebus_alloc(sizeof* command);
+    RegisterPeerCommand* command = cb_new(RegisterPeerCommand, 1);
     register_peer_command__init(command);
 
     command->peer = peer_descriptor_proto_new(peer);
@@ -49,7 +49,7 @@ void register_directory(cb_time_uuid_gen* gen, cb_zmq_transport* transport,  cb_
     cb_transport_message* transport_message = cb_to_transport_message((const ProtobufCMessage *)register_command, gen, &self->peer_id, self->endpoint, environment, "Abc.Zebus.Directory");
 
     cb_peer_list* directory_peers = cb_peer_list_new();
-    cb_peer* directory_peer = cb_alloc(cb_peer, 1);
+    cb_peer* directory_peer = cb_new(cb_peer, 1);
 
     cb_peer_set_endpoint(directory_peer, endpoint);
     cb_peer_id_set(&directory_peer->peer_id, "Directory.0");
@@ -69,6 +69,7 @@ int main(int argc, const char* argv[])
     cb_zmq_transport* transport;
     cb_zmq_transport_error rc;
     cb_peer* self;
+
 
     cb_time_uuid_gen uuid_gen;
     if (cb_time_uuid_gen_init_random(&uuid_gen) == cebus_false)
@@ -95,7 +96,7 @@ int main(int argc, const char* argv[])
     }
     CB_LOG_DBG(CB_LOG_LEVEL_INFO, "... 0MQ transport started");
 
-    self = cb_alloc(cb_peer, 1);
+    self = cb_new(cb_peer, 1);
     cb_peer_set_endpoint(self, cb_zmq_transport_inbound_endpoint(transport));
     cb_peer_id_set(&self->peer_id, my_peer.value);
 

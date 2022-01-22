@@ -19,10 +19,10 @@ const char* cb_peer_id_get(const cb_peer_id* peer)
 
 PeerId* cb_peer_id_proto_new(const cb_peer_id* id)
 {
-    PeerId* proto = cebus_alloc(sizeof *proto);
+    PeerId* proto = cb_new(PeerId, 1);
     peer_id__init(proto);
 
-    proto->value = cebus_strdup(id->value);
+    proto->value = cb_strdup(id->value);
     return proto;
 }
 

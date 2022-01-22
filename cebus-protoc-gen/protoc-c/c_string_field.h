@@ -60,33 +60,36 @@
 
 // Modified to implement C code by Dave Benson.
 
-#ifndef GOOGLE_PROTOBUF_COMPILER_C_MESSAGE_FIELD_H__
-#define GOOGLE_PROTOBUF_COMPILER_C_MESSAGE_FIELD_H__
+#ifndef GOOGLE_PROTOBUF_COMPILER_C_STRING_FIELD_H__
+#define GOOGLE_PROTOBUF_COMPILER_C_STRING_FIELD_H__
 
 #include <map>
 #include <string>
 
-#include <protoc-cebus/c_field.h>
+#include <protoc-c/c_field.h>
 
 namespace google {
 namespace protobuf {
 namespace compiler {
 namespace c {
 
-class MessageFieldGenerator : public FieldGenerator {
+class StringFieldGenerator : public FieldGenerator {
  public:
-  explicit MessageFieldGenerator(const FieldDescriptor* descriptor);
-  ~MessageFieldGenerator();
+  explicit StringFieldGenerator(const FieldDescriptor* descriptor);
+  ~StringFieldGenerator();
 
   // implements FieldGenerator ---------------------------------------
   void GenerateStructMembers(io::Printer* printer) const;
   void GenerateDescriptorInitializer(io::Printer* printer) const;
+  void GenerateDefaultValueDeclarations(io::Printer* printer) const;
+  void GenerateDefaultValueImplementations(io::Printer* printer) const;
   std::string GetDefaultValue(void) const;
   void GenerateStaticInit(io::Printer* printer) const;
 
  private:
+  std::map<std::string, std::string> variables_;
 
-  GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(MessageFieldGenerator);
+  GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(StringFieldGenerator);
 };
 
 
@@ -95,4 +98,4 @@ class MessageFieldGenerator : public FieldGenerator {
 }  // namespace protobuf
 
 }  // namespace google
-#endif  // GOOGLE_PROTOBUF_COMPILER_C_MESSAGE_FIELD_H__
+#endif  // GOOGLE_PROTOBUF_COMPILER_C_STRING_FIELD_H__

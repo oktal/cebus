@@ -60,91 +60,41 @@
 
 // Modified to implement C code by Dave Benson.
 
-#include <protoc-cebus/c_enum_field.h>
-#include <protoc-cebus/c_helpers.h>
+#ifndef GOOGLE_PROTOBUF_COMPILER_C_BYTES_FIELD_H__
+#define GOOGLE_PROTOBUF_COMPILER_C_BYTES_FIELD_H__
 
-#include <google/protobuf/io/printer.h>
-#include <google/protobuf/wire_format.h>
+#include <map>
+#include <string>
+#include <protoc-c/c_field.h>
 
 namespace google {
 namespace protobuf {
 namespace compiler {
 namespace c {
 
-using internal::WireFormat;
+class BytesFieldGenerator : public FieldGenerator {
+ public:
+  explicit BytesFieldGenerator(const FieldDescriptor* descriptor);
+  ~BytesFieldGenerator();
 
-// TODO(kenton):  Factor out a "SetCommonFieldVariables()" to get rid of
-//   repeat code between this and the other field types.
-void SetEnumVariables(const FieldDescriptor* descriptor,
-                      std::map<std::string, std::string>* variables) {
+  // implements FieldGenerator ---------------------------------------
+  void GenerateStructMembers(io::Printer* printer) const;
+  void GenerateDescriptorInitializer(io::Printer* printer) const;
+  void GenerateDefaultValueDeclarations(io::Printer* printer) const;
+  void GenerateDefaultValueImplementations(io::Printer* printer) const;
+  std::string GetDefaultValue(void) const;
+  void GenerateStaticInit(io::Printer* printer) const;
 
-  (*variables)["name"] = FieldName(descriptor);
-  (*variables)["type"] = FullNameToC(descriptor->enum_type()->full_name(), descriptor->enum_type()->file());
-  const EnumValueDescriptor* default_value = descriptor->default_value_enum();
-  (*variables)["default"] = FullNameToUpper(default_value->type()->full_name(), default_value->type()->file())
-                          + "__" + default_value->name();
-  (*variables)["deprecated"] = FieldDeprecated(descriptor);
-}
+ private:
+  std::map<std::string, std::string> variables_;
 
-// ===================================================================
-
-EnumFieldGenerator::
-EnumFieldGenerator(const FieldDescriptor* descriptor)
-  : FieldGenerator(descriptor)
-{
-  SetEnumVariables(descriptor, &variables_);
-}
-
-EnumFieldGenerator::~EnumFieldGenerator() {}
-
-void EnumFieldGenerator::GenerateStructMembers(io::Printer* printer) const
-{
-  switch (descriptor_->label()) {
-    case FieldDescriptor::LABEL_REQUIRED:
-      printer->Print(variables_, "$type$ $name$$deprecated$;\n");
-      break;
-    case FieldDescriptor::LABEL_OPTIONAL:
-      if (descriptor_->containing_oneof() == NULL && FieldSyntax(descriptor_) == 2)
-        printer->Print(variables_, "protobuf_c_boolean has_$name$$deprecated$;\n");
-      printer->Print(variables_, "$type$ $name$$deprecated$;\n");
-      break;
-    case FieldDescriptor::LABEL_REPEATED:
-      printer->Print(variables_, "size_t n_$name$$deprecated$;\n");
-      printer->Print(variables_, "$type$ *$name$$deprecated$;\n");
-      break;
-  }
-}
-
-std::string EnumFieldGenerator::GetDefaultValue(void) const
-{
-  return variables_.find("default")->second;
-}
-void EnumFieldGenerator::GenerateStaticInit(io::Printer* printer) const
-{
-  switch (descriptor_->label()) {
-    case FieldDescriptor::LABEL_REQUIRED:
-      printer->Print(variables_, "$default$");
-      break;
-    case FieldDescriptor::LABEL_OPTIONAL:
-      if (FieldSyntax(descriptor_) == 2)
-        printer->Print(variables_, "0, ");
-      printer->Print(variables_, "$default$");
-      break;
-    case FieldDescriptor::LABEL_REPEATED:
-      // no support for default?
-      printer->Print("0,NULL");
-      break;
-  }
-}
-
-void EnumFieldGenerator::GenerateDescriptorInitializer(io::Printer* printer) const
-{
-  std::string addr = "&" + FullNameToLower(descriptor_->enum_type()->full_name(), descriptor_->enum_type()->file()) + "__descriptor";
-  GenerateDescriptorInitializerGeneric(printer, true, "ENUM", addr);
-}
+  GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(BytesFieldGenerator);
+};
 
 
 }  // namespace c
 }  // namespace compiler
 }  // namespace protobuf
 }  // namespace google
+
+#endif  // GOOGLE_PROTOBUF_COMPILER_C_STRING_FIELD_H__

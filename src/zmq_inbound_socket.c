@@ -76,7 +76,7 @@ static cb_zmq_inbound_socket_error cb_zmq_inbound_socket_get_zmq_endpoint(cb_zmq
 cb_zmq_inbound_socket* cb_zmq_inbound_socket_new(
     void* context, const cb_peer_id* peer_id, const char* endpoint, cb_zmq_socket_options options)
 {
-    cb_zmq_inbound_socket* socket = cb_alloc(cb_zmq_inbound_socket, 1);
+    cb_zmq_inbound_socket* socket = cb_new(cb_zmq_inbound_socket, 1);
 
     socket->context   = context;
     socket->sock      = NULL;

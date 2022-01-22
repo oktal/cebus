@@ -61,12 +61,12 @@
 
 // Modified to implement C code by Dave Benson.
 
-#include <protoc-cebus/c_file.h>
-#include <protoc-cebus/c_enum.h>
-#include <protoc-cebus/c_service.h>
-#include <protoc-cebus/c_extension.h>
-#include <protoc-cebus/c_helpers.h>
-#include <protoc-cebus/c_message.h>
+#include <protoc-c/c_file.h>
+#include <protoc-c/c_enum.h>
+#include <protoc-c/c_service.h>
+#include <protoc-c/c_extension.h>
+#include <protoc-c/c_helpers.h>
+#include <protoc-c/c_message.h>
 
 #include <google/protobuf/io/printer.h>
 

@@ -60,10 +60,17 @@
 
 // Modified to implement C code by Dave Benson.
 
-#include <protoc-cebus/c_bytes_field.h>
-#include <protoc-cebus/c_helpers.h>
+#include <protoc-c/c_generator.h>
+
+#include <memory>
+#include <vector>
+#include <utility>
+
+#include <protoc-c/c_file.h>
+#include <protoc-c/c_helpers.h>
+
 #include <google/protobuf/io/printer.h>
-#include <google/protobuf/wire_format.h>
+#include <google/protobuf/io/zero_copy_stream.h>
 
 #include <protobuf-c.pb.h>
 
@@ -72,90 +79,97 @@ namespace protobuf {
 namespace compiler {
 namespace c {
 
-using internal::WireFormat;
+// Parses a set of comma-delimited name/value pairs, e.g.:
+//   "foo=bar,baz,qux=corge"
+// parses to the pairs:
+//   ("foo", "bar"), ("baz", ""), ("qux", "corge")
+void ParseOptions(const std::string& text, std::vector<std::pair<std::string, std::string> >* output) {
+  std::vector<std::string> parts;
+  SplitStringUsing(text, ",", &parts);
 
-void SetBytesVariables(const FieldDescriptor* descriptor,
-                        std::map<std::string, std::string>* variables) {
-  (*variables)["name"] = FieldName(descriptor);
-  (*variables)["default"] =
-    "\"" + CEscape(descriptor->default_value_string()) + "\"";
-  (*variables)["deprecated"] = FieldDeprecated(descriptor);
-}
-
-// ===================================================================
-
-BytesFieldGenerator::
-BytesFieldGenerator(const FieldDescriptor* descriptor)
-  : FieldGenerator(descriptor) {
-  SetBytesVariables(descriptor, &variables_);
-  variables_["default_value"] = descriptor->has_default_value()
-                              ? GetDefaultValue() 
-			      : std::string("{0,NULL}");
-}
-
-BytesFieldGenerator::~BytesFieldGenerator() {}
-
-void BytesFieldGenerator::GenerateStructMembers(io::Printer* printer) const
-{
-  switch (descriptor_->label()) {
-    case FieldDescriptor::LABEL_REQUIRED:
-      printer->Print(variables_, "ProtobufCBinaryData $name$$deprecated$;\n");
-      break;
-    case FieldDescriptor::LABEL_OPTIONAL:
-      if (descriptor_->containing_oneof() == NULL && FieldSyntax(descriptor_) == 2)
-        printer->Print(variables_, "protobuf_c_boolean has_$name$$deprecated$;\n");
-      printer->Print(variables_, "ProtobufCBinaryData $name$$deprecated$;\n");
-      break;
-    case FieldDescriptor::LABEL_REPEATED:
-      printer->Print(variables_, "size_t n_$name$$deprecated$;\n");
-      printer->Print(variables_, "ProtobufCBinaryData *$name$$deprecated$;\n");
-      break;
+  for (unsigned i = 0; i < parts.size(); i++) {
+    std::string::size_type equals_pos = parts[i].find_first_of('=');
+    std::pair<std::string, std::string> value;
+    if (equals_pos == std::string::npos) {
+      value.first = parts[i];
+      value.second = "";
+    } else {
+      value.first = parts[i].substr(0, equals_pos);
+      value.second = parts[i].substr(equals_pos + 1);
+    }
+    output->push_back(value);
   }
 }
-void BytesFieldGenerator::GenerateDefaultValueDeclarations(io::Printer* printer) const
-{
-  std::map<std::string, std::string> vars;
-  vars["default_value_data"] = FullNameToLower(descriptor_->full_name(), descriptor_->file())
-	                     + "__default_value_data";
-  printer->Print(vars, "extern uint8_t $default_value_data$[];\n");
-}
 
-void BytesFieldGenerator::GenerateDefaultValueImplementations(io::Printer* printer) const
-{
-  std::map<std::string, std::string> vars;
-  vars["default_value_data"] = FullNameToLower(descriptor_->full_name(), descriptor_->file())
-	                     + "__default_value_data";
-  vars["escaped"] = CEscape(descriptor_->default_value_string());
-  printer->Print(vars, "uint8_t $default_value_data$[] = \"$escaped$\";\n");
-}
-std::string BytesFieldGenerator::GetDefaultValue(void) const
-{
-  return "{ "
-	+ SimpleItoa(descriptor_->default_value_string().size())
-	+ ", "
-	+ FullNameToLower(descriptor_->full_name(), descriptor_->file())
-	+ "__default_value_data }";
-}
-void BytesFieldGenerator::GenerateStaticInit(io::Printer* printer) const
-{
-  switch (descriptor_->label()) {
-    case FieldDescriptor::LABEL_REQUIRED:
-      printer->Print(variables_, "$default_value$");
-      break;
-    case FieldDescriptor::LABEL_OPTIONAL:
-      if (FieldSyntax(descriptor_) == 2)
-        printer->Print(variables_, "0, ");
-      printer->Print(variables_, "$default_value$");
-      break;
-    case FieldDescriptor::LABEL_REPEATED:
-      // no support for default?
-      printer->Print("0,NULL");
-      break;
+CGenerator::CGenerator() {}
+CGenerator::~CGenerator() {}
+
+bool CGenerator::Generate(const FileDescriptor* file,
+                            const std::string& parameter,
+                            OutputDirectory* output_directory,
+                            std::string* error) const {
+  if (file->options().GetExtension(pb_c_file).no_generate())
+    return true;
+
+  std::vector<std::pair<std::string, std::string> > options;
+  ParseOptions(parameter, &options);
+
+  // -----------------------------------------------------------------
+  // parse generator options
+
+  // TODO(kenton):  If we ever have more options, we may want to create a
+  //   class that encapsulates them which we can pass down to all the
+  //   generator classes.  Currently we pass dllexport_decl down to all of
+  //   them via the constructors, but we don't want to have to add another
+  //   constructor parameter for every option.
+
+  // If the dllexport_decl option is passed to the compiler, we need to write
+  // it in front of every symbol that should be exported if this .proto is
+  // compiled into a Windows DLL.  E.g., if the user invokes the protocol
+  // compiler as:
+  //   protoc --cpp_out=dllexport_decl=FOO_EXPORT:outdir foo.proto
+  // then we'll define classes like this:
+  //   class FOO_EXPORT Foo {
+  //     ...
+  //   }
+  // FOO_EXPORT is a macro which should expand to __declspec(dllexport) or
+  // __declspec(dllimport) depending on what is being compiled.
+  std::string dllexport_decl;
+
+  for (unsigned i = 0; i < options.size(); i++) {
+    if (options[i].first == "dllexport_decl") {
+      dllexport_decl = options[i].second;
+    } else {
+      *error = "Unknown generator option: " + options[i].first;
+      return false;
+    }
   }
-}
-void BytesFieldGenerator::GenerateDescriptorInitializer(io::Printer* printer) const
-{
-  GenerateDescriptorInitializerGeneric(printer, true, "BYTES", "NULL");
+
+  // -----------------------------------------------------------------
+
+
+  std::string basename = StripProto(file->name());
+  basename.append(".pb-c");
+
+  FileGenerator file_generator(file, dllexport_decl);
+
+  // Generate header.
+  {
+    std::unique_ptr<io::ZeroCopyOutputStream> output(
+      output_directory->Open(basename + ".h"));
+    io::Printer printer(output.get(), '$');
+    file_generator.GenerateHeader(&printer);
+  }
+
+  // Generate cc file.
+  {
+    std::unique_ptr<io::ZeroCopyOutputStream> output(
+      output_directory->Open(basename + ".c"));
+    io::Printer printer(output.get(), '$');
+    file_generator.GenerateSource(&printer);
+  }
+
+  return true;
 }
 
 }  // namespace c

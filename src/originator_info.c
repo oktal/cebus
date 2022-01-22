@@ -28,13 +28,13 @@ void originator_info_set_sender_initiator_user(originator_info* originator, cons
 
 OriginatorInfo* originator_info_proto_new(const originator_info* info)
 {
-    OriginatorInfo* proto = cebus_alloc(sizeof *proto);
+    OriginatorInfo* proto = cb_new(OriginatorInfo, 1);
     originator_info__init(proto);
 
     proto->sender_id = cb_peer_id_proto_new(&info->sender_id);
-    proto->sender_endpoint = cebus_strdup(info->sender_endpoint);
-    proto->sender_machine = cebus_strdup(info->sender_machine);
-    proto->initiator_user_name = cebus_strdup(info->initiator_user_name);
+    proto->sender_endpoint = cb_strdup(info->sender_endpoint);
+    proto->sender_machine = cb_strdup(info->sender_machine);
+    proto->initiator_user_name = cb_strdup(info->initiator_user_name);
 
     return proto;;
 }
