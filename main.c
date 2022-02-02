@@ -9,6 +9,8 @@
 #include "cebus/transport_message.h"
 #include "cebus/transport/zmq_transport.h"
 
+#include "cebus/bus.h"
+
 #include "cebus/collection/hash_map.h"
 
 #include "peer_descriptor.pb-c.h"
@@ -60,6 +62,7 @@ void register_directory(cb_time_uuid_gen* gen, cb_zmq_transport* transport,  cb_
 
 int main(int argc, const char* argv[])
 {
+#if 0
     void* context;
     cb_peer_id directory_peer;
     cb_peer_id my_peer;
@@ -69,7 +72,6 @@ int main(int argc, const char* argv[])
     cb_zmq_transport* transport;
     cb_zmq_transport_error rc;
     cb_peer* self;
-
 
     cb_time_uuid_gen uuid_gen;
     if (cb_time_uuid_gen_init_random(&uuid_gen) == cebus_false)
@@ -113,4 +115,34 @@ int main(int argc, const char* argv[])
 
     cb_zmq_transport_free(transport);
     return 0;
+#endif
+    cb_zmq_transport_configuration configuration;
+    cb_zmq_socket_options options;
+    cb_bus* bus;
+    cb_bus_error err;
+    cb_peer_id self;
+    cb_transport* transport;
+
+    if (argc < 4)
+    {
+        fprintf(stderr, "usage ./cebus [directory-endpoint] [endpoint] [environment]\n");
+        return 0;
+    }
+
+    cb_peer_id_set(&self, "Abc.Peer.0");
+
+    cb_zmq_socket_options_init_default(&options);
+    strcpy(configuration.inbound_endpoint, argv[2]);
+
+    transport = cb_zmq_transport_new(configuration, options);
+
+    bus = cb_bus_create(transport);
+    if ((err = cb_bus_start(bus)) != cb_bus_ok)
+    {
+        CB_LOG_DBG(CB_LOG_LEVEL_INFO, "Failed to start bus ...");
+    }
+
+    getchar();
+
+    cb_bus_free(bus);
 }

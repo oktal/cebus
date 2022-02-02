@@ -114,3 +114,9 @@ void cb_uuid_print(const cb_uuid_t* uuid, char* buf, size_t size)
     // NUL-terminate the string
     TRY_WRITE(buf, 36, 0);
 }
+
+cebus_bool cb_uuid_eq(const cb_uuid_t* lhs, const cb_uuid_t* rhs)
+{
+    return cebus_bool_from_int(memcmp(&lhs->bits, &rhs->bits, CB_UUID_BITS) == 0);
+
+}

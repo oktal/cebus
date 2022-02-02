@@ -38,6 +38,66 @@ static void transport_message_print(const cb_transport_message* message, FILE* o
             uuid, message->message_type_id.value, originator->sender_id.value, originator->sender_endpoint, originator->sender_machine, originator->initiator_user_name, message->data, message->n_data);
 }
 
+// **********************
+// * Dispatch table
+// **********************
+
+static void cb_zmq_transport_configure_dispatch(cb_transport* base, const cb_peer_id* peer_id, const char* environment)
+{
+    cb_zmq_transport_configure((cb_zmq_transport *) base, peer_id, environment);
+}
+
+static void cb_zmq_transport_on_message_received_dispatch(cb_transport* base, cb_transport_on_message on_message, void* user)
+{
+    cb_zmq_transport_on_message_received((cb_zmq_transport *) base, on_message, user);
+}
+
+static cb_transport_error cb_zmq_transport_start_dispatch(cb_transport* base)
+{
+    return cb_zmq_transport_start((cb_zmq_transport *) base);
+}
+
+static cb_transport_error cb_zmq_transport_stop_dispatch(cb_transport* base)
+{
+    return cb_zmq_transport_stop((cb_zmq_transport *) base);
+}
+
+static cb_transport_error cb_zmq_transport_send_dispatch(cb_transport* base, cb_transport_message* transport_message, cb_peer_list* peers)
+{
+    return cb_zmq_transport_send((cb_zmq_transport *) base, transport_message, peers);
+}
+
+static const cb_peer_id* cb_zmq_transport_peer_id_dispatch(cb_transport* base)
+{
+    return cb_zmq_transport_peer_id((cb_zmq_transport *) base);
+}
+
+static const char* cb_zmq_transport_inbound_endpoint_dispatch(cb_transport* base)
+{
+    return cb_zmq_transport_inbound_endpoint((cb_zmq_transport *) base);
+}
+
+static void cb_zmq_transport_free_dispatch(cb_transport* base)
+{
+    cb_zmq_transport_free((cb_zmq_transport *) base);
+}
+
+static void cb_zmq_transport_init_base(cb_transport* base)
+{
+    base->on_message_received_func = cb_zmq_transport_on_message_received_dispatch;
+    base->configure_func = cb_zmq_transport_configure_dispatch;
+    base->start_func = cb_zmq_transport_start_dispatch;
+    base->stop_func = cb_zmq_transport_stop_dispatch;
+    base->send_func = cb_zmq_transport_send_dispatch;
+    base->peer_id_func = cb_zmq_transport_peer_id_dispatch;
+    base->inbound_endpoint_func = cb_zmq_transport_inbound_endpoint_dispatch;
+    base->free_func = cb_zmq_transport_free_dispatch;
+}
+
+// **************************
+// * Private implementation
+// **************************
+
 static cb_zmq_outbound_socket* cb_zmq_transport_get_outbound_socket(cb_zmq_transport* transport, cb_peer* peer)
 {
     cb_hash_value_t* socket_value = cb_hash_get(transport->outbound_sockets, &peer->peer_id);
@@ -168,7 +228,7 @@ static void cb_zmq_transport_handle_message(cb_zmq_transport* transport, const T
         else
         {
             if (transport->on_message != NULL)
-                transport->on_message(message);
+                transport->on_message(message, transport->user);
         }
     }
 }
@@ -187,7 +247,7 @@ static void* cb_zmq_transport_inbound_loop(void* arg)
         if (rc != cb_zmq_inbound_socket_ok)
         {
             fprintf(stderr, "Failed to read: %s (%d)\n", strerror(socket->zmq_error), rc);
-            //break;
+            break;
         }
         else
         {
@@ -256,50 +316,15 @@ static void cb_zmq_transport_outbound_push(cb_zmq_transport* transport, cb_zmq_o
     cb_cond_signal(&transport->outbound_action_cond);
 }
 
-cb_peer_list* cb_peer_list_new()
-{
-    cb_peer_list *list = cb_new(cb_peer_list, 1);
-    list->head = list->tail = NULL;
+// **********************
+// * Public API
+// **********************
 
-    return list;
-}
-
-void cb_peer_list_add(cb_peer_list* list, cb_peer* peer)
-{
-    cb_peer_entry *entry = cb_new(cb_peer_entry, 1);
-    entry->peer = peer;
-    entry->next = NULL;
-    
-    if (list->tail == NULL)
-    {
-        list->head = entry;
-        list->tail = entry;
-    }
-    else
-    {
-        list->tail->next = entry;
-        list->tail = entry;
-    }
-}
-
-void cb_peer_list_free(cb_peer_list* list)
-{
-    cb_peer_entry* entry = list->head;
-    while (entry != NULL)
-    {
-        cb_peer_entry* node = entry;
-        free(entry->peer);
-        entry = entry->next;
-        free(node);
-    }
-
-    free(list);
-}
-
-cb_zmq_transport* cb_zmq_transport_new(
-        cb_zmq_transport_configuration configuration, cb_zmq_socket_options socket_options, cb_zmq_transport_on_message on_message)
+cb_transport* cb_zmq_transport_new(cb_zmq_transport_configuration configuration, cb_zmq_socket_options socket_options)
 {
     cb_zmq_transport* transport = cb_new(cb_zmq_transport, 1);
+    cb_zmq_transport_init_base(&transport->base);
+
     cb_hash_map* outbound_sockets = cb_hash_map_new(cb_peer_id_hash, cb_peer_id_hash_eq);
 
     transport->configuration = configuration;
@@ -308,14 +333,21 @@ cb_zmq_transport* cb_zmq_transport_new(
     transport->outbound_sockets = outbound_sockets;
     transport->zmq_context = NULL;
 
-    transport->outbound_action_head = NULL;
+    transport->on_message = NULL;
+    transport->user = NULL;
 
-    transport->on_message = on_message;
+    transport->outbound_action_head = NULL;
 
     cb_thread_init(&transport->inbound_thread);
     cb_thread_init(&transport->outbound_thread);
 
-    return transport;
+    return &transport->base;
+}
+
+void cb_zmq_transport_on_message_received(cb_zmq_transport* transport, cb_transport_on_message on_message, void* user)
+{
+    transport->on_message = on_message;
+    transport->user = user;
 }
 
 void cb_zmq_transport_configure(cb_zmq_transport* transport, const cb_peer_id* peer_id, const char* environment)
@@ -379,6 +411,11 @@ error:
 cb_zmq_transport_error cb_zmq_transport_stop(cb_zmq_transport* transport)
 {
     return cb_zmq_transport_ok;
+}
+
+const cb_peer_id* cb_zmq_transport_peer_id(const cb_zmq_transport* transport)
+{
+    return &transport->peer_id;
 }
 
 const char* cb_zmq_transport_inbound_endpoint(const cb_zmq_transport* transport)

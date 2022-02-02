@@ -30,3 +30,6 @@ void cb_uuid_generate_time(cb_time_uuid_gen* gen, cb_uuid_t* uuid);
 
 /// Print a string representation of the given `uuid` to a buffer pointed by `buf`
 void cb_uuid_print(const cb_uuid_t* uuid, char* buf, size_t size);
+
+/// Return `cebus_bool` if uuids are equal of `false` otherwise
+cebus_bool cb_uuid_eq(const cb_uuid_t* lhs, const cb_uuid_t* rhs);

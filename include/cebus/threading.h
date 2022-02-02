@@ -72,3 +72,41 @@ cebus_bool cb_cond_wait(cb_cond_t* cond, cb_mutex_t* mutex);
 
 /// Destroys the condition variable pointed to by cond.
 void cb_cond_destroy(cb_cond_t* cond);
+
+
+//
+// Future
+//
+
+typedef enum cb_future_state
+{
+    cb_future_pending,
+
+    cb_future_ready,
+} cb_future_state;
+
+/// The function to call back when the future has been resolved
+typedef void (*cb_future_awaiter)(void* user, void* data);
+
+/// A `future` provides a mechanism to access the result of asynchronous operations:
+typedef struct cb_future
+{
+    cb_mutex_t mutex;
+
+    void* data;
+
+    cb_future_state state;
+
+    cb_future_awaiter awaiter;
+
+    void* user;
+} cb_future;
+
+/// Initializes a new `future`
+void cb_future_init(cb_future* future);
+
+cb_future_state cb_future_poll(cb_future* future, void** data_out);
+
+void cb_future_await(cb_future* future, cb_future_awaiter awaiter, void* user);
+
+void cb_future_set(cb_future* future, void* data);

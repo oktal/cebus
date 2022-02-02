@@ -23,6 +23,7 @@ set(cebus_SRC
     alloc.c
     atomic_c11.c
     binding_key.c
+    bus.c
     hash_map.c
     hasher.c
     log.c
@@ -33,10 +34,12 @@ set(cebus_SRC
     peer.c
     peer_id.c
     random.c
+    string.c
     time.c
     timespan.c
     threading.c
     transport_message.c
+    transport.c
     uuid.c
 
     zmq_inbound_socket.c
