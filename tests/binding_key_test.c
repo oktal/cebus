@@ -149,6 +149,25 @@ MunitResult should_create_binding_key_from_proto(const MunitParameter params[], 
     return MUNIT_OK;
 }
 
+MunitResult should_create_binding_key_from_str(const MunitParameter params[], void* data)
+{
+    cb_binding_key key;
+
+    key = cb_binding_key_from_str("my.message.1234");
+    munit_assert_ullong(cb_binding_key_fragment_count(key), ==, 3);
+    munit_assert_string_equal(cb_binding_key_get_fragment(key, 0).value, "my");
+    munit_assert_string_equal(cb_binding_key_get_fragment(key, 1).value, "message");
+    munit_assert_string_equal(cb_binding_key_get_fragment(key, 2).value, "1234");
+    cb_binding_key_free(&key);
+
+    key = cb_binding_key_from_str("*");
+    munit_assert_ullong(cb_binding_key_fragment_count(key), ==, 1);
+    munit_assert_string_equal(cb_binding_key_get_fragment(key, 0).value, "*");
+    cb_binding_key_free(&key);
+
+    return MUNIT_OK;
+}
+
 CEBUS_DECLARE_TEST_SUITE(
     binding_key_tests,
 
@@ -156,5 +175,6 @@ CEBUS_DECLARE_TEST_SUITE(
     CEBUS_TEST(should_string_binding_key),
     CEBUS_TEST(should_create_binding_key_from_proto_binding),
     CEBUS_TEST(should_create_partial_binding_key_from_proto_binding),
-    CEBUS_TEST(should_create_binding_key_from_proto)
+    CEBUS_TEST(should_create_binding_key_from_proto),
+    CEBUS_TEST(should_create_binding_key_from_str)
 )

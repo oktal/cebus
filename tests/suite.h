@@ -18,6 +18,8 @@
         NULL                     \
     }
 
+#define cb_test_case(s)
+
 #define CEBUS_DECLARE_TEST_SUITE(name, ...)                      \
     MunitTest tests[] = {                                        \
         __VA_ARGS__,                                             \

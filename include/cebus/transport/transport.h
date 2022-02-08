@@ -13,28 +13,6 @@
 typedef int cb_transport_error;
 #define CB_TRANSPORT_OK(err) ((err) == 0)
 
-typedef struct cb_peer_entry
-{
-    cb_peer* peer;
-    struct cb_peer_entry* next;
-} cb_peer_entry;
-
-/// A list of peers
-typedef struct cb_peer_list
-{
-    cb_peer_entry* head;
-    cb_peer_entry* tail;
-} cb_peer_list;
-
-/// Create a new list of peers
-cb_peer_list* cb_peer_list_new();
-
-/// Add a `peer` to the list of peers pointed by `list`
-void cb_peer_list_add(cb_peer_list* list, cb_peer* peer);
-
-/// Free the memory allocated by the list pointed by `list`
-void cb_peer_list_free(cb_peer_list* list);
-
 /// The function that gets called by the transport layer when a message has been received
 typedef void (*cb_transport_on_message)(const TransportMessage* message, void* user);
 

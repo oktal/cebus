@@ -19,8 +19,9 @@ void* cb_alloc_safe(size_t size, const char* file, size_t line)
 
 char* cb_strndup(const char* s, size_t n)
 {
-    char *dup = cb_alloc(n);
+    char *dup = cb_alloc(n + 1);
     strncpy(dup, s, n);
+    dup[n] = 0;
     return dup;
 }
 

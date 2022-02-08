@@ -9,6 +9,7 @@ set(cebus_PROTOS
     message_type_id.proto
     originator_info.proto
     peer_descriptor.proto
+    peer_started.proto
     peer_id.proto
     peer.proto
     register_peer_command.proto
@@ -32,9 +33,12 @@ set(cebus_SRC
     message_type_id.c
     originator_info.c
     peer.c
+    peer_directory.c
     peer_id.c
+    peer_subscription_tree.c
     random.c
     string.c
+    subscription.c
     time.c
     timespan.c
     threading.c
