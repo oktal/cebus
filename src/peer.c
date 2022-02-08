@@ -64,7 +64,7 @@ cb_peer_list* cb_peer_list_new()
 void cb_peer_list_add(cb_peer_list* list, cb_peer* peer)
 {
     cb_peer_entry *entry = cb_new(cb_peer_entry, 1);
-    entry->peer = peer;
+    entry->peer = cb_peer_clone(peer);
     entry->next = NULL;
     
     if (list->tail == NULL)
@@ -103,7 +103,7 @@ cebus_bool cb_peer_list_remove(cb_peer_list* list, cb_peer* peer)
 
             entry = tmp->next;
 
-            //free(current_peer);
+            free(current_peer);
             free(tmp);
             list->count -= 1;
             return cebus_true;
