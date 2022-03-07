@@ -176,6 +176,22 @@ cb_hash_value_t cb_hash_insert(cb_hash_map* map, const cb_hash_key_t key, const 
     return bucket->value;
 }
 
+void cb_hash_clear(cb_hash_map* map, cb_hash_dtor destructor, void* user)
+{
+    size_t i;
+    for (i = 0; i < map->size; ++i)
+    {
+        cb_hash_bucket* bucket = &map->buckets[i];
+        if (cb_hash_bucket_empty(bucket) == cebus_false)
+        {
+            if (destructor != NULL)
+                destructor(bucket->key, bucket->value, user);
+            cb_hash_bucket_reset(bucket);
+        }
+    }
+    map->n_entries = 0;
+}
+
 cb_hash_value_t cb_hash_remove(cb_hash_map* map, const cb_hash_key_t key)
 {
     cb_hash_bucket* bucket = cb_hash_lookup(map, key, NULL);

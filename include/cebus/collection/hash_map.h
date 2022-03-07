@@ -31,6 +31,9 @@ typedef cebus_bool (*cb_hash_eq)(cb_hash_key_t, cb_hash_key_t);
 /// The function to use to iterator over the hashmap entries
 typedef void (*cb_hash_iter)(const cb_hash_key_t, const cb_hash_value_t, void* user);
 
+/// The function to use to delete an entry
+typedef void (*cb_hash_dtor)(cb_hash_key_t, cb_hash_value_t, void* user);
+
 /// A hash map with linear probing collision resolution
 typedef struct cb_hash_map
 {
@@ -63,6 +66,8 @@ cb_hash_value_t cb_hash_get(cb_hash_map* map, const cb_hash_key_t key);
 /// or `NULL` it the key was not present in the `map`
 cb_hash_value_t cb_hash_insert(cb_hash_map* map, const cb_hash_key_t key, const cb_hash_value_t value);
 
+/// Remove all the keys from the `map` and invoke the `destructor` function with `user` data on every entry if not NULL
+void cb_hash_clear(cb_hash_map* map, cb_hash_dtor destructor, void* user);
 
 /// Remove a `key` from the `map` and return the corresponding value or `NULL` it the key was not present
 /// in the `map`
