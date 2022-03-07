@@ -29,7 +29,7 @@ typedef void (*cb_hash_func)(cb_hasher*, cb_hash_key_t);
 typedef cebus_bool (*cb_hash_eq)(cb_hash_key_t, cb_hash_key_t);
 
 /// The function to use to iterator over the hashmap entries
-typedef void (*cb_hash_iter)(const cb_hash_key_t, const cb_hash_value_t);
+typedef void (*cb_hash_iter)(const cb_hash_key_t, const cb_hash_value_t, void* user);
 
 /// A hash map with linear probing collision resolution
 typedef struct cb_hash_map
@@ -71,7 +71,8 @@ cb_hash_value_t cb_hash_remove(cb_hash_map* map, const cb_hash_key_t key);
 /// Return the number of entries in the `map` 
 size_t cb_hash_len(const cb_hash_map* map);
 
-void cb_hash_foreach(const cb_hash_map* map, cb_hash_iter func);
+/// Iterate over every entry of the `map` and call the `func` callback for each entry
+void cb_hash_foreach(const cb_hash_map* map, cb_hash_iter func, void* user);
 
 /// Hash a single `uint64_t` key
 void cb_hash_u64(cb_hasher* hasher, cb_hash_key_t key);

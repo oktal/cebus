@@ -4,8 +4,28 @@
 #include <stdio.h>
 #include <string.h>
 
+static const char* cb_log_level_str(cb_log_level level)
+{
+    switch (level)
+    {
+        case cb_log_level_trace:
+            return "trace";
+        case cb_log_level_debug:
+            return "debug";
+        case cb_log_level_info:
+            return "info";
+        case cb_log_level_warn:
+            return "warn";
+        case cb_log_level_error:
+            return "error";
+    }
+
+    return "";
+}
+
 static void do_cb_log(cb_log_level level, const char* str)
 {
+    fprintf(stdout, "(%s) ", cb_log_level_str(level));
     fputs(str, stdout);
     fputc('\n', stdout);
 }

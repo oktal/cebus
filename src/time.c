@@ -61,11 +61,8 @@ static uint64_t cb_date_to_ticks(uint32_t year, uint32_t month, uint32_t day)
 
 static uint64_t cb_time_to_ticks(uint32_t hour, uint32_t minute, uint32_t second)
 {
-    //const uint64_t seconds = hour * CB_SECONDS_PER_HOUR + minute * CB_SECONDS_PER_MINUTE + second;
-    //return seconds * CB_TICKS_PER_SECOND;
-
-    const uint64_t seconds = hour * 3600 + minute * 60 + second;
-    return seconds * 10000 * 1000;
+    const uint64_t seconds = hour * CB_SECONDS_PER_HOUR + minute * CB_SECONDS_PER_MINUTE + second;
+    return seconds * CB_TICKS_PER_SECOND;
 }
 
 static uint32_t cb_date_time_get_date_part(cb_date_time dt, cb_date_part part)
@@ -224,6 +221,12 @@ cb_date_time cb_date_time_from_ymd_hms(uint32_t year, uint32_t month, uint32_t d
         // Leap second
         return cb_date_time_from_ymd_hms(year, month, day, hour, minute, 59);
     }
+}
+
+cb_date_time cb_date_time_since_epoch(cb_date_time dt)
+{
+    const uint64_t epoch_ticks = dt.ticks - CB_EPOCH_TICKS;
+    return cb_date_time_from_ticks(epoch_ticks);
 }
 
 uint32_t cb_date_time_year(cb_date_time dt)

@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define BCL_GUID_BYTES 8
+
 static Bcl__Guid* cb_guid_proto_new(const cb_uuid_t* uuid)
 {
-    const size_t BCL_GUID_BYTES = 8;
-
     Bcl__Guid* proto = cb_new(Bcl__Guid, 1);
     bcl__guid__init(proto);
 
@@ -18,9 +18,24 @@ static Bcl__Guid* cb_guid_proto_new(const cb_uuid_t* uuid)
     return proto;
 }
 
+static cb_message_id cb_message_id_from_guid(const Bcl__Guid* guid)
+{
+    cb_message_id id;
+    uint8_t *bits = id.value.bits;
+    memcpy(bits, &guid->hi, BCL_GUID_BYTES);
+    memcpy(bits + BCL_GUID_BYTES, &guid->lo, BCL_GUID_BYTES);
+
+    return id;
+}
+
 static void cb_guid_proto_free(Bcl__Guid* guid)
 {
     free(guid);
+}
+
+cb_message_id cb_message_id_from_proto(const MessageId *proto)
+{
+    return cb_message_id_from_guid(proto->value);
 }
 
 void cb_message_id_next(cb_message_id* message_id, cb_time_uuid_gen* gen)

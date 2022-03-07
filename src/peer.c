@@ -6,6 +6,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+void cb_peer_from_proto(cb_peer* peer, const Peer* proto)
+{
+    cb_peer_id_set(&peer->peer_id, proto->id->value);
+    cb_peer_set_endpoint(peer, proto->endpoint);
+
+    peer->is_responding = cebus_bool_from_int(proto->is_responding);
+    peer->is_up = cebus_bool_from_int(proto->is_up);
+}
+
 void cb_peer_set_endpoint(cb_peer* peer, const char* value)
 {
     if (peer == NULL)
@@ -18,8 +27,11 @@ Peer* cb_peer_proto_new(const cb_peer* peer)
 {
     Peer* proto = cb_new(Peer, 1);
     peer__init(proto);
+
     proto->id = cb_peer_id_proto_new(&peer->peer_id);
     proto->endpoint = cb_strdup(peer->endpoint);
+    proto->is_responding = peer->is_responding;
+    proto->is_up = peer->is_up;
 
     return proto;
 }

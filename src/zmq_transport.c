@@ -6,6 +6,8 @@
 #include "cebus/peer.h"
 #include "cebus/peer_id.h"
 
+#include "message_serializer.h"
+
 typedef void (*cb_zmq_outbound_action_callback)(void *);
 
 typedef struct cb_zmq_outbound_action_send_info

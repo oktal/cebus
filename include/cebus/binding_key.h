@@ -35,6 +35,9 @@ typedef struct cb_binding_key_builder
 /// default-initialize a new binding_key
 void cb_binding_key_init(cb_binding_key* key);
 
+/// Copy a `cb_binding_key` from `src` to `dst`
+void cb_binding_key_copy(cb_binding_key* dst, const cb_binding_key* src);
+
 /// Initialize a binding_key from a list of `count` fragments.
 /// This function will do a copy of all the fragments pointed by `fragments`
 cb_binding_key cb_binding_key_from_fragments(const char** fragments, size_t count);

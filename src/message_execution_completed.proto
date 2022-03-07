@@ -1,0 +1,17 @@
+syntax = "proto2";
+
+import "cebus.proto";
+import "message_id.proto";
+import "message_type_id.proto";
+
+message MessageExecutionCompleted {
+    option (message_type) = Command;
+    option (namespace) = "Abc.Zebus.Core";
+
+    required MessageId source_message_id = 1;
+    required int32 error_code = 2;
+
+    optional MessageTypeId payload_type_id = 3;
+    optional bytes payload = 4;
+    optional string response_message = 5;
+}

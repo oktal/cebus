@@ -1,5 +1,6 @@
 syntax = "proto2";
 
+import "bcl.proto";
 import "peer.proto";
 import "subscription.proto";
 
@@ -10,7 +11,7 @@ message PeerDescriptor {
 
     required bool is_persistent = 3;
 
-    optional fixed64 timestamp_utc = 4;
+    optional bcl.DateTime timestamp_utc = 4;
 
     optional bool has_debugger_attached = 5;
 }

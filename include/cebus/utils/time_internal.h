@@ -49,3 +49,9 @@
 
 /// Maximum supported year
 #define CB_DATE_MAX_YEAR 9999
+
+/// Number of days from 1/1/0001 to unix-epoch (1/1/1970)
+#define CB_DAYS_TO_1970 (CB_DAYS_PER_400_YEARS * 4 + CB_DAYS_PER_100_YEARS * 3 + CB_DAYS_PER_4_YEARS * 17 + CB_DAYS_PER_YEAR)
+
+/// Number of ticks for unix-epoch
+#define CB_EPOCH_TICKS (CB_DAYS_TO_1970 * CB_TICKS_PER_DAY)

@@ -150,15 +150,12 @@ cb_hash_value_t cb_hash_insert(cb_hash_map* map, const cb_hash_key_t key, const 
     cb_hash_t hash;
     cb_hash_bucket* bucket = cb_hash_lookup(map, key, &hash);
 
-    cb_hash_key_t bucket_key = bucket->key;
-    cb_hash_value_t bucket_value = bucket->value;
-
     #if CB_HASH_DEBUG
       const ptrdiff_t index = bucket - map->buckets;
       printf("Inserting at index %lu with hash %ull\n", index, hash);
     #endif
 
-    if (bucket_key == NULL)
+    if (bucket->key == NULL)
     {
         bucket->hash = hash;
         bucket->key = key;
@@ -176,7 +173,7 @@ cb_hash_value_t cb_hash_insert(cb_hash_map* map, const cb_hash_key_t key, const 
       cb_hash_print(map);
     #endif
             
-    return bucket_value;
+    return bucket->value;
 }
 
 cb_hash_value_t cb_hash_remove(cb_hash_map* map, const cb_hash_key_t key)
@@ -198,14 +195,14 @@ size_t cb_hash_len(const cb_hash_map* map)
     return map->n_entries;
 }
 
-void cb_hash_foreach(const cb_hash_map* map, cb_hash_iter func)
+void cb_hash_foreach(const cb_hash_map* map, cb_hash_iter func, void* user)
 {
     size_t i;
     for (i = 0; i < map->size; ++i)
     {
         const cb_hash_bucket* bucket = &map->buckets[i];
         if (cb_hash_bucket_empty(bucket) == cebus_false)
-            func(bucket->key, bucket->value);
+            func(bucket->key, bucket->value, user);
     }
 }
 

@@ -43,6 +43,23 @@ void cb_binding_key_init(cb_binding_key* key)
     *key = default_value;
 }
 
+void cb_binding_key_copy(cb_binding_key* dst, const cb_binding_key* src)
+{
+    if (dst->parts != NULL)
+        free(dst->parts);
+
+    dst->parts = cb_new(char *, src->n_parts);
+    dst->n_parts = src->n_parts;
+
+    {
+        size_t i;
+        for (i = 0; i < dst->n_parts; ++i)
+        {
+            dst->parts[i] = cb_strdup(src->parts[i]);
+        }
+    }
+}
+
 cb_binding_key cb_binding_key_from_fragments(const char** fragments, size_t count)
 {
     cb_binding_key key;

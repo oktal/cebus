@@ -1,0 +1,10 @@
+syntax = "proto2";
+
+import "peer_descriptor.proto";
+import "cebus.proto";
+
+message PeerStarted {
+    option (message_type) = Event;
+
+    required PeerDescriptor peer_descriptor = 1;
+}

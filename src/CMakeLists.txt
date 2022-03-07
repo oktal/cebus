@@ -5,6 +5,7 @@ include(ProtobufCebus)
 set(cebus_PROTOS
     bcl.proto
     binding_key.proto
+    message_execution_completed.proto
     message_id.proto
     message_type_id.proto
     originator_info.proto
@@ -13,6 +14,7 @@ set(cebus_PROTOS
     peer_id.proto
     peer.proto
     register_peer_command.proto
+    register_peer_response.proto
     subscription.proto
     transport_message.proto
     uuid.proto
@@ -23,16 +25,21 @@ protobuf_generate_c(PROTO_SRCS PROTO_HDRS PROTOS ${cebus_PROTOS})
 set(cebus_SRC
     alloc.c
     atomic_c11.c
+    bcl.c
     binding_key.c
+    binding_key_proto.c
     bus.c
+    command.c
     hash_map.c
     hasher.c
     log.c
     message_context.c
     message_id.c
+    message_serializer.c
     message_type_id.c
     originator_info.c
     peer.c
+    peer_descriptor.c
     peer_directory.c
     peer_id.c
     peer_subscription_tree.c

@@ -12,8 +12,10 @@ message CebusMessageOptions {
  
 extend google.protobuf.MessageOptions {
     optional MessageType message_type = 10000;
+
+    optional string namespace = 10001;
 }
 
 extend google.protobuf.FieldOptions {
-    optional int32 routing_position = 10001;
+    optional int32 routing_position = 2000;
 }

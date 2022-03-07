@@ -38,6 +38,8 @@ cb_date_time cb_date_time_from_ymd_hms(uint32_t year, uint32_t month, uint32_t d
 /// Creates a new `cb_date_time` representing the current UTC date and time
 cb_date_time cb_date_time_utc_now();
 
+cb_date_time cb_date_time_since_epoch(cb_date_time dt);
+
 /// Get the corresponding year for the given date time
 uint32_t cb_date_time_year(cb_date_time dt);
 

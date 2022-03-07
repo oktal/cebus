@@ -1,0 +1,41 @@
+#pragma once
+
+#include "cebus/cebus_bool.h"
+#include "cebus/peer.h"
+#include "cebus/subscription.h"
+#include "cebus/utils/time.h"
+
+#include "peer_descriptor.pb-c.h"
+
+/// Describes a `Peer` and its list of `Subscription`
+typedef struct cb_peer_descriptor
+{
+    cb_peer peer;
+
+    cb_subscription* subscriptions;
+    size_t n_subscriptions;
+
+    cebus_bool is_persistent;
+
+    cb_date_time timestamp_utc;
+
+    cebus_bool has_debugger_attached;
+} cb_peer_descriptor;
+
+/// Create a new `cb_peer_descriptor` from `PeerDescriptor` protobuf message
+cb_peer_descriptor *cb_peer_descriptor_from_proto(const PeerDescriptor *proto);
+
+/// Create a new `cb_peer_descriptor` from a given `peer` and a list of `subscriptions`
+cb_peer_descriptor* cb_peer_descriptor_new(const cb_peer* peer, const cb_subscription* subscriptions, size_t n_subscriptions);
+
+/// Free the memory allocated by `descriptor`
+void cb_peer_descriptor_free(cb_peer_descriptor* descriptor);
+
+/// Initialize a `PeerDescriptor` protobuf message from a given `cb_peer_descriptor` descriptor
+void cb_peer_descriptor_proto_from(PeerDescriptor *proto, const cb_peer_descriptor *descriptor);
+
+/// Create a new `PeerDescriptor` protobuf message from a `cb_peer_descriptor` descriptor
+PeerDescriptor* cb_peer_descriptor_proto_new(const cb_peer_descriptor* descriptor);
+
+/// Free the memory allocated by the `PeerDescriptor` protobuf message
+void cb_peer_descriptor_proto_free(PeerDescriptor* proto);

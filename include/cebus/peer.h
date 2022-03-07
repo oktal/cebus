@@ -15,6 +15,9 @@ typedef struct cb_peer
     cebus_bool is_responding;
 } cb_peer;
 
+/// Initialize a `cb_peer` from a `Peer` protobuf message
+void cb_peer_from_proto(cb_peer* peer, const Peer* proto);
+
 void cb_peer_set_endpoint(cb_peer* peer, const char* value);
 
 cb_peer* cb_peer_clone(const cb_peer* src);

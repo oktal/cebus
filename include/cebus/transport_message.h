@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cebus/config.h"
+#include "cebus/command.h"
 #include "cebus/cebus_bool.h"
 
 #include "cebus/message_id.h"
@@ -13,7 +14,7 @@
 typedef struct cb_transport_message
 {
     cb_message_id id;
-    message_type_id message_type_id;
+    cb_message_type_id message_type_id;
     originator_info originator;
 
     char environment[CEBUS_STR_MAX];
@@ -21,18 +22,14 @@ typedef struct cb_transport_message
 
     void *data;
     size_t n_data;
-
 } cb_transport_message;
 
-void* cb_pack_message(const ProtobufCMessage* proto, size_t *size_out);
-
 cb_transport_message* cb_to_transport_message(
-        const ProtobufCMessage* message,
+        const cb_command* message,
         cb_time_uuid_gen* uuid_gen,
         const cb_peer_id* peer_id,
         const char* sender_endpoint,
-        const char* environment,
-        const char* namespace);
+        const char* environment);
 
 TransportMessage* cb_transport_message_proto_new(const cb_transport_message* message);
 void cb_transport_message_proto_free(TransportMessage* message);

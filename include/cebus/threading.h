@@ -86,27 +86,26 @@ typedef enum cb_future_state
 } cb_future_state;
 
 /// The function to call back when the future has been resolved
-typedef void (*cb_future_awaiter)(void* user, void* data);
+typedef void (*cb_future_continuation)(void* user, void* data);
+
+/// The destructor function to call when destroying the future
+typedef void (*cb_future_destructor)(void *user, void *data);
 
 /// A `future` provides a mechanism to access the result of asynchronous operations:
 typedef struct cb_future
 {
-    cb_mutex_t mutex;
-
-    void* data;
-
-    cb_future_state state;
-
-    cb_future_awaiter awaiter;
-
-    void* user;
+    void* inner;
 } cb_future;
 
 /// Initializes a new `future`
-void cb_future_init(cb_future* future);
+void cb_future_init(cb_future* future, cb_future_destructor destructor);
 
 cb_future_state cb_future_poll(cb_future* future, void** data_out);
 
-void cb_future_await(cb_future* future, cb_future_awaiter awaiter, void* user);
+void cb_future_then(cb_future* future, cb_future_continuation continuation, void* user);
 
 void cb_future_set(cb_future* future, void* data);
+
+void* cb_future_get(cb_future* future);
+
+void cb_future_destroy(cb_future* future);

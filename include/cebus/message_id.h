@@ -10,6 +10,7 @@ typedef struct cb_message_id
     cb_uuid_t value;
 } cb_message_id;
 
+cb_message_id cb_message_id_from_proto(const MessageId* proto);
 void cb_message_id_next(cb_message_id* message_id, cb_time_uuid_gen* gen);
 
 MessageId* cb_message_id_proto_new(const cb_message_id* message_id);

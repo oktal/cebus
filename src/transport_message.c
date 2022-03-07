@@ -8,30 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void cb_transport_set_message_type_id_from_proto(
-        cb_transport_message* transport_message,
-        const ProtobufCMessage* proto,
-        const char* namespace)
-{
-    char full_name[CEBUS_STR_MAX];
-    const ProtobufCMessageDescriptor* descriptor = proto->descriptor;
-
-    snprintf(full_name, CEBUS_STR_MAX, "%s.%s", namespace, descriptor->name);
-    message_type_id_set(&transport_message->message_type_id, full_name);
-}
-
-void* cb_pack_message(const ProtobufCMessage* proto, size_t *size_out)
-{
-    const size_t packed_size = protobuf_c_message_get_packed_size(proto);
-    if (size_out != NULL)
-        *size_out = packed_size;
-
-    uint8_t* buf = cb_new(uint8_t, packed_size);
-    protobuf_c_message_pack(proto, buf);
-
-    return buf;
-}
-
 static void cb_set_originator_info(originator_info* originator, const cb_peer_id* peer_id, const char* sender_endpoint)
 {
     originator_info_set_sender_id(originator, peer_id);
@@ -41,18 +17,18 @@ static void cb_set_originator_info(originator_info* originator, const cb_peer_id
 }
 
 cb_transport_message* cb_to_transport_message(
-        const ProtobufCMessage* proto,
+        const cb_command* command,
         cb_time_uuid_gen* uuid_gen,
         const cb_peer_id* peer_id,
         const char* sender_endpoint,
-        const char* environment,
-        const char* namespace)
+        const char* environment)
 {
     cb_transport_message* message = cb_new(cb_transport_message, 1);
     cb_message_id_next(&message->id, uuid_gen);
-    cb_transport_set_message_type_id_from_proto(message, proto, namespace);
+    cb_message_type_id_copy(&message->message_type_id, &command->message_type_id);
     strncpy(message->environment, environment, CEBUS_STR_MAX);
-    message->data = cb_pack_message(proto, &message->n_data);
+    message->data = command->data;
+    message->n_data = command->n_data;
     cb_set_originator_info(&message->originator, peer_id, sender_endpoint);
 
     return message;
@@ -64,7 +40,7 @@ TransportMessage* cb_transport_message_proto_new(const cb_transport_message* mes
     transport_message__init(proto);
 
     proto->id = cb_message_id_proto_new(&message->id);
-    proto->message_type_id = message_type_id_proto_new(&message->message_type_id);
+    proto->message_type_id = cb_message_type_id_proto_new(&message->message_type_id);
     proto->content_bytes.data = cb_alloc(message->n_data);
     memcpy(proto->content_bytes.data, message->data, message->n_data);
     proto->content_bytes.len = message->n_data;
@@ -78,7 +54,7 @@ TransportMessage* cb_transport_message_proto_new(const cb_transport_message* mes
 void cb_transport_message_proto_free(TransportMessage* proto)
 {
     cb_message_id_proto_free(proto->id);
-    message_type_id_proto_free(proto->message_type_id);
+    cb_message_type_id_proto_free(proto->message_type_id);
     free(proto->content_bytes.data);
     originator_info_proto_free(proto->originator);
     free(proto->environment);

@@ -1,0 +1,8 @@
+syntax = "proto2";
+
+import "cebus.proto";
+import "peer_descriptor.proto";
+
+message RegisterPeerResponse {
+    repeated PeerDescriptor peer_descriptors = 1;
+}
