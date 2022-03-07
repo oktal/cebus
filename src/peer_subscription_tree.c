@@ -1,8 +1,6 @@
 #include "cebus/peer_subscription_tree.h"
 #include "cebus/alloc.h"
 
-#include "cebus/iter_utils.h"
-
 #include <string.h>
 
 typedef struct cb_peer_subscription_tree_collector

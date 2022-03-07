@@ -2,7 +2,6 @@
 
 #include "cebus/alloc.h"
 #include "cebus/cebus_bool.h"
-#include "cebus/iter_utils.h"
 #include "cebus/log.h"
 #include "cebus/message_type_id.h"
 #include "cebus/peer.h"

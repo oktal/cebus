@@ -1,7 +1,6 @@
 #include "cebus/binding_key.h"
 
 #include "cebus/alloc.h"
-#include "cebus/iter_utils.h"
 
 #include <inttypes.h>
 #include <stdarg.h>
@@ -67,9 +66,13 @@ cb_binding_key cb_binding_key_from_fragments(const char** fragments, size_t coun
     key.parts = cb_new(char *, count);
     key.n_parts = count;
 
-    cebus_for_range(i, 0, count, {
-        key.parts[i] = cb_strdup(fragments[i]);
-    });
+    {
+        size_t i;
+        for (i = 0; i < count; ++i)
+        {
+            key.parts[i] = cb_strdup(fragments[i]);
+        }
+    }
 
     return key;
 }
