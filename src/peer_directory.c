@@ -10,34 +10,10 @@
 
 #include "bcl.h"
 
+#include "peer_id.pb-c.h"
 #include "register_peer_command.pb-c.h"
 #include "register_peer_response.pb-c.h"
-
-cb_peer_descriptor *cb_peer_descriptor_from_proto(const PeerDescriptor *proto)
-{
-    cb_peer_descriptor* descriptor = cb_new(cb_peer_descriptor, 1);
-    cb_peer_from_proto(&descriptor->peer, proto->peer);
-
-    if (proto->n_subscriptions > 0)
-    {
-        size_t i;
-        descriptor->subscriptions =
-            cb_new(cb_subscription, proto->n_subscriptions);
-        descriptor->n_subscriptions = proto->n_subscriptions;
-
-        for (i = 0; i < descriptor->n_subscriptions; ++i)
-        {
-            cb_subscription_from_proto(&descriptor->subscriptions[i],
-                                       proto->subscriptions[i]);
-        }
-    }
-
-    descriptor->is_persistent = cebus_bool_from_int(proto->is_persistent);
-    descriptor->timestamp_utc = cb_date_time_from_proto(proto->timestamp_utc);
-    descriptor->has_debugger_attached = cebus_bool_from_int(proto->has_debugger_attached);
-
-    return descriptor;
-}
+#include "unregister_peer_command.pb-c.h"
 
 typedef struct cb_peer_directory_entry
 {
@@ -48,6 +24,36 @@ typedef struct cb_peer_directory_entry
     cebus_bool is_persistent;
 
 } cb_peer_directory_entry;
+
+typedef struct cb_peer_directory_iterator
+{
+    size_t index;
+
+    char** const directoryEndpoints;
+} cb_peer_directory_iterator;
+
+static cb_peer_directory_iterator cb_peer_directory_iter(const cb_peer_directory* peer_directory)
+{
+    cb_peer_directory_iterator iter = { 0, peer_directory->configuration.directoryEndpoints };
+    return iter;
+}
+
+static cebus_bool cb_peer_directory_iter_has_next(cb_peer_directory_iterator iter)
+{
+    return cebus_bool_from_int(iter.directoryEndpoints[iter.index] != NULL);
+}
+
+static void cb_peer_directory_iter_move_next(cb_peer_directory_iterator* iter)
+{
+    ++iter->index;
+}
+
+void cb_peer_directory_iter_get_peer(cb_peer_directory_iterator iter, cb_peer* peer)
+{
+    const char* endpoint = iter.directoryEndpoints[iter.index];
+    cb_peer_set_endpoint(peer, endpoint);
+    cb_peer_id_set(&peer->peer_id, "Abc.Zebus.Directory.%zu", iter.index);
+}
 
 static void cb_peer_directory_print_peer_entry(const cb_hash_key_t key, const cb_hash_value_t value, void* user)
 {
@@ -77,12 +83,17 @@ static cb_peer_directory_entry* cb_peer_directory_entry_new(const cb_peer_descri
     return entry;
 }
 
-static cb_peer_descriptor* cb_peer_directory_create_self_descriptor(cb_peer_directory* directory, const cb_subscription* subscriptions, size_t n_subscriptions)
+static void cb_peer_directory_entry_free(cb_hash_key_t key, cb_hash_value_t value, void* user)
 {
-    cb_peer_descriptor* descriptor = cb_peer_descriptor_new(&directory->self, subscriptions, n_subscriptions);
+    cb_peer_directory_entry* entry = (cb_peer_directory_entry *) value;
+    free(value);
+}
+
+static void cb_peer_directory_init_self_descriptor(cb_peer_directory* directory, cb_peer_descriptor* descriptor, const cb_subscription* subscriptions, size_t n_subscriptions)
+{
+    cb_peer_descriptor_init(descriptor, &directory->self, subscriptions, n_subscriptions);
     descriptor->is_persistent = directory->configuration.is_persistent;
     descriptor->timestamp_utc = cb_date_time_utc_now();
-    return descriptor;
 }
 
 static void cb_peer_directory_add_or_update_entry(cb_peer_directory* directory, cb_peer_descriptor* descriptor)
@@ -129,8 +140,8 @@ static cb_peer_directory_error cb_peer_directory_handle_register_peer_response(c
         for (i = 0; i < response->n_peer_descriptors; ++i)
         {
             const PeerDescriptor* descriptor = response->peer_descriptors[i];
-            cb_peer_descriptor* peer_descriptor = cb_peer_descriptor_from_proto(descriptor);
-            cb_peer_directory_add_or_update_entry(directory, peer_descriptor);
+            cb_peer_descriptor peer_descriptor;
+            cb_peer_directory_add_or_update_entry(directory, cb_peer_descriptor_from_proto(&peer_descriptor, descriptor));
         }
 
         register_peer_response__free_unpacked(response, NULL);
@@ -141,27 +152,34 @@ static cb_peer_directory_error cb_peer_directory_handle_register_peer_response(c
 
 static cb_peer_directory_error cb_peer_directory_try_register_directory(cb_peer_directory* directory, cb_bus* bus, cb_peer_descriptor* descriptor)
 {
-    const cb_bus_configuration* configuration = &directory->configuration;
-    cb_peer directory_peer;
-    RegisterPeerCommand register_command;
-    RegisterPeerResponse* register_response = NULL;
     PeerDescriptor peer_descriptor;
+    RegisterPeerCommand register_command;
     cb_command command;
-    cb_command_result command_result;
-
-    cb_peer_set_endpoint(&directory_peer, configuration->directoryEndpoints[0]);
-    cb_peer_id_set(&directory_peer.peer_id, "Abc.Zebus.Directory.0");
+    cb_peer_directory_iterator directory_peer_iter = cb_peer_directory_iter(directory);
 
     cb_peer_descriptor_proto_from(&peer_descriptor, descriptor);
-
     register_peer_command__init(&register_command);
     register_command.peer = &peer_descriptor; 
-
-    CB_LOG_DBG(CB_LOG_LEVEL_DEBUG, "Registering %s to directory %s (%s)", peer_descriptor.peer->id->value, directory_peer.peer_id.value, directory_peer.endpoint);
-
     command = CB_COMMAND(register_command, "Abc.Zebus.Directory");
-    command_result = cb_bus_send_to(bus, &command, &directory_peer);
-    return cb_peer_directory_handle_register_peer_response(directory, command_result);
+
+    while (cb_peer_directory_iter_has_next(directory_peer_iter) == cebus_true)
+    {
+        cb_peer directory_peer;
+        cb_command_result command_result;
+        cb_peer_directory_error rc;
+
+        cb_peer_directory_iter_get_peer(directory_peer_iter, &directory_peer);
+        CB_LOG_DBG(CB_LOG_LEVEL_DEBUG, "Registering %s to directory %s (%s)", peer_descriptor.peer->id->value, directory_peer.peer_id.value, directory_peer.endpoint);
+
+        // TODO: Handle timeout
+        command_result = cb_bus_send_to(bus, &command, &directory_peer);
+        rc = cb_peer_directory_handle_register_peer_response(directory, command_result);
+        if (rc == cb_peer_directory_ok)
+            return rc;
+    }
+
+    return cb_peer_directory_registration_failed;
+
 }
 
 void cb_peer_directory_init(cb_peer_directory* directory, cb_bus_configuration configuration)
@@ -173,15 +191,50 @@ void cb_peer_directory_init(cb_peer_directory* directory, cb_bus_configuration c
 
 cb_peer_directory_error cb_peer_directory_register(cb_peer_directory* directory, cb_bus* bus, const cb_peer* self, const cb_subscription* subscriptions, size_t n_subscriptions)
 {
-    cb_peer_descriptor* descriptor;
+    cb_peer_descriptor descriptor;
     cb_peer_copy(&directory->self, self);
     directory->self.is_responding = cebus_true;
     directory->self.is_up = cebus_true;
 
-    descriptor = cb_peer_directory_create_self_descriptor(directory, subscriptions, n_subscriptions);
-    cb_peer_directory_add_or_update_entry(directory, descriptor);
+    cb_hash_clear(directory->peers, cb_peer_directory_entry_free, NULL);
 
-    return cb_peer_directory_try_register_directory(directory, bus, descriptor);
+    cb_peer_directory_init_self_descriptor(directory, &descriptor, subscriptions, n_subscriptions);
+    cb_peer_directory_add_or_update_entry(directory, &descriptor);
+
+    return cb_peer_directory_try_register_directory(directory, bus, &descriptor);
+}
+
+cb_peer_directory_error cb_peer_directory_unregister(cb_peer_directory* directory, cb_bus* bus)
+{
+    cb_peer_directory_iterator directory_peer_iter = cb_peer_directory_iter(directory);
+    UnregisterPeerCommand unregister_peer_command;
+    PeerId peer_id;
+    Bcl__DateTime timestamp_utc;
+    cb_command command;
+
+    unregister_peer_command__init(&unregister_peer_command);
+    unregister_peer_command.peer_id = cb_peer_id_proto_init(&peer_id, &directory->self.peer_id);
+    unregister_peer_command.peer_endpoint = directory->self.endpoint;
+    unregister_peer_command.timestamp_utc = cb_bcl_date_time_proto_init(&timestamp_utc, cb_date_time_utc_now());
+    command = CB_COMMAND(unregister_peer_command, "Abc.Zebus.Directory");
+
+    while (cb_peer_directory_iter_has_next(directory_peer_iter) == cebus_true)
+    {
+        cb_peer directory_peer;
+        cb_command_result command_result;
+        cb_peer_directory_error rc;
+
+        cb_peer_directory_iter_get_peer(directory_peer_iter, &directory_peer);
+        CB_LOG_DBG(CB_LOG_LEVEL_DEBUG, "Unregistering %s from directory %s (%s)",
+                directory->self.peer_id.value, directory_peer.peer_id.value, directory_peer.endpoint);
+
+        // TODO: Handle timeout
+        command_result = cb_bus_send_to(bus, &command, &directory_peer);
+        if (command_result.error_code == 0)
+            return cb_peer_directory_ok;
+    }
+
+    return cb_peer_directory_registration_failed;
 }
 
 void cb_peer_directory_handle_peer_started(PeerStarted* message)

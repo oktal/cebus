@@ -1,0 +1,16 @@
+syntax = "proto2";
+
+import "bcl.proto";
+import "cebus.proto";
+import "peer_id.proto";
+
+message UnregisterPeerCommand {
+    option (message_type) = Command;
+    option (namespace) = "Abc.Zebus.Directory";
+
+    required PeerId peer_id = 1;
+
+    optional string peer_endpoint = 2; 
+
+    optional bcl.DateTime timestamp_utc = 3;
+}

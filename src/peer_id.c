@@ -3,12 +3,17 @@
 #include "cebus/alloc.h"
 #include "cebus/config.h"
 
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-void cb_peer_id_set(cb_peer_id* peer, const char* value)
+void cb_peer_id_set(cb_peer_id* peer, const char* fmt, ...)
 {
-    strncpy(peer->value, value, CEBUS_PEER_ID_MAX);
+    va_list list;
+    va_start(list, fmt);
+    vsnprintf(peer->value, CEBUS_PEER_ID_MAX, fmt, list);
+    va_end(list);
 }
 
 const char* cb_peer_id_get(const cb_peer_id* peer)
@@ -16,19 +21,21 @@ const char* cb_peer_id_get(const cb_peer_id* peer)
     return peer->value;
 }
 
-PeerId* cb_peer_id_proto_new(const cb_peer_id* id)
+PeerId* cb_peer_id_proto_init(PeerId *proto, const cb_peer_id *id)
 {
-    PeerId* proto = cb_new(PeerId, 1);
     peer_id__init(proto);
-
     proto->value = cb_strdup(id->value);
     return proto;
+}
+
+PeerId* cb_peer_id_proto_new(const cb_peer_id* id)
+{
+    return cb_peer_id_proto_init(cb_new(PeerId, 1), id);
 }
 
 void cb_peer_id_proto_free(PeerId* proto)
 {
     free(proto->value);
-    free(proto);
 }
 
 void cb_peer_id_copy(cb_peer_id* dst, const cb_peer_id* src)

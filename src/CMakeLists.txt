@@ -17,6 +17,7 @@ set(cebus_PROTOS
     register_peer_response.proto
     subscription.proto
     transport_message.proto
+    unregister_peer_command.proto
     uuid.proto
 )
 

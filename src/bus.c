@@ -217,12 +217,25 @@ static cb_bus_error cb_bus_impl_start(cb_bus* base)
 
     cb_transport_on_message_received(impl->transport, cb_bus_impl_on_transport_message, impl);
     if (!CB_TRANSPORT_OK(transport_err = cb_transport_start(impl->transport)))
-    {
-        CB_LOG_DBG(CB_LOG_LEVEL_ERROR, "Error starting transport");
         return cb_bus_error_transport;
-    }
 
     impl->inbound_endpoint = cb_transport_inbound_endpoint(impl->transport);
+    return cb_bus_ok;
+}
+
+static cb_bus_error cb_bus_impl_stop(cb_bus* base)
+{
+    cb_bus_impl* impl = (cb_bus_impl *)base;
+    uint64_t expected = 1;
+    cb_transport_error transport_err;
+
+    if (cb_atomic_compare_exchange_strong_u64((volatile uint64_t *)&impl->is_running, expected, 0) == cebus_false)
+        return cb_bus_error_not_started;
+
+    CB_LOG_DBG(CB_LOG_LEVEL_DEBUG, "Stopping transport ...");
+    if  (!CB_TRANSPORT_OK(transport_err = cb_transport_stop(impl->transport)))
+        return cb_bus_error_transport;
+
     return cb_bus_ok;
 }
 
@@ -241,6 +254,7 @@ static void cb_bus_impl_init_base(cb_bus* base)
     CB_BUS_VIRT_SET(base, configure, cb_bus_impl_configure);
     CB_BUS_VIRT_SET(base, send_to, cb_bus_impl_send_to);
     CB_BUS_VIRT_SET(base, start, cb_bus_impl_start);
+    CB_BUS_VIRT_SET(base, stop, cb_bus_impl_stop);
     CB_BUS_VIRT_SET(base, free, cb_bus_impl_free);
 }
 
@@ -295,6 +309,11 @@ cb_command_result cb_bus_send_to(cb_bus* bus, const cb_command* command, const c
 cb_bus_error cb_bus_start(cb_bus* bus)
 {
     return CB_BUS_VIRT_CALL(bus, start);
+}
+
+cb_bus_error cb_bus_stop(cb_bus* bus)
+{
+    return CB_BUS_VIRT_CALL(bus, stop);
 }
 
 void cb_bus_free(cb_bus* bus)

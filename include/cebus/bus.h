@@ -27,6 +27,9 @@ typedef enum cb_bus_error
     /// Bus is already running
     cb_bus_error_already_running,
 
+    /// Bus has not been started
+    cb_bus_error_not_started,
+
     /// An error occured when starting the underlying transport layer
     cb_bus_error_transport,
 } cb_bus_error;

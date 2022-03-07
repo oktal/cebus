@@ -10,9 +10,10 @@ typedef struct cb_peer_id
     char value[CEBUS_PEER_ID_MAX];
 } cb_peer_id;
 
-void cb_peer_id_set(cb_peer_id* peer, const char* value);
+void cb_peer_id_set(cb_peer_id* peer, const char* fmt, ...);
 const char* cb_peer_id_get(const cb_peer_id* peer);
 
+PeerId* cb_peer_id_proto_init(PeerId* proto, const cb_peer_id* id);
 PeerId* cb_peer_id_proto_new(const cb_peer_id* id);
 void cb_peer_id_proto_free(PeerId* proto);
 

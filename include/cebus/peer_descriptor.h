@@ -22,8 +22,11 @@ typedef struct cb_peer_descriptor
     cebus_bool has_debugger_attached;
 } cb_peer_descriptor;
 
-/// Create a new `cb_peer_descriptor` from `PeerDescriptor` protobuf message
-cb_peer_descriptor *cb_peer_descriptor_from_proto(const PeerDescriptor *proto);
+/// Initialize and return a `cb_peer_descriptor` from a `PeerDescriptor` protobuf message
+cb_peer_descriptor *cb_peer_descriptor_from_proto(cb_peer_descriptor* descriptor, const PeerDescriptor *proto);
+
+/// Initialize a `cb_peer_descriptor` from `given `peer` and a list of `subscriptions`
+void cb_peer_descriptor_init(cb_peer_descriptor* descriptor, const cb_peer* peer, const cb_subscription* subscriptions, size_t n_subscriptions);
 
 /// Create a new `cb_peer_descriptor` from a given `peer` and a list of `subscriptions`
 cb_peer_descriptor* cb_peer_descriptor_new(const cb_peer* peer, const cb_subscription* subscriptions, size_t n_subscriptions);

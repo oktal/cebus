@@ -117,5 +117,8 @@ int main(int argc, const char* argv[])
 
     getchar();
 
+    cb_peer_directory_unregister(&directory, bus);
+
+    cb_bus_stop(bus);
     cb_bus_free(bus);
 }

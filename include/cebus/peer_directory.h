@@ -25,6 +25,9 @@ typedef enum cb_peer_directory_error
 
     /// The peer already exists inside the Peer Directory
     cb_peer_directory_peer_already_exists,
+
+    /// Registration failed on every endpoint tried
+    cb_peer_directory_registration_failed,
 } cb_peer_directory_error;
 
 /// A client to communicate with the peer directory and store the state of the directory (peers and subscriptions) in-memory
@@ -43,7 +46,11 @@ typedef struct cb_peer_directory
 void cb_peer_directory_init(cb_peer_directory* directory, cb_bus_configuration configuration);
 
 /// Attempt to register `self` peer to the peer `directory`.
-/// Return `cb_peer_directory_ok` on success on `cb_peer_directory_error` otherwise
+/// Return `cb_peer_directory_ok` on success or `cb_peer_directory_error` otherwise
 cb_peer_directory_error cb_peer_directory_register(cb_peer_directory* directory, cb_bus* bus, const cb_peer* self, const cb_subscription* subscriptions, size_t n_subscriptions);
+
+/// Un-register from the peer `directory`
+/// Return `cb_peer_directory_ok` on success or `cb_peer_directory_error` otherwise
+cb_peer_directory_error cb_peer_directory_unregister(cb_peer_directory* directory, cb_bus* bus);
 
 void cb_peer_directory_handle_peer_started(PeerStarted* message);

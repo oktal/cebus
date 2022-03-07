@@ -5,9 +5,33 @@
 
 #include "bcl.h"
 
-cb_peer_descriptor* cb_peer_descriptor_new(const cb_peer* peer, const cb_subscription* subscriptions, size_t n_subscriptions)
+cb_peer_descriptor* cb_peer_descriptor_from_proto(cb_peer_descriptor* descriptor, const PeerDescriptor *proto)
 {
-    cb_peer_descriptor* descriptor = cb_new(cb_peer_descriptor, 1);
+    cb_peer_from_proto(&descriptor->peer, proto->peer);
+
+    if (proto->n_subscriptions > 0)
+    {
+        size_t i;
+        descriptor->subscriptions =
+            cb_new(cb_subscription, proto->n_subscriptions);
+        descriptor->n_subscriptions = proto->n_subscriptions;
+
+        for (i = 0; i < descriptor->n_subscriptions; ++i)
+        {
+            cb_subscription_from_proto(&descriptor->subscriptions[i],
+                                       proto->subscriptions[i]);
+        }
+    }
+
+    descriptor->is_persistent = cebus_bool_from_int(proto->is_persistent);
+    descriptor->timestamp_utc = cb_date_time_from_proto(proto->timestamp_utc);
+    descriptor->has_debugger_attached = cebus_bool_from_int(proto->has_debugger_attached);
+
+    return descriptor;
+}
+
+void cb_peer_descriptor_init(cb_peer_descriptor* descriptor, const cb_peer* peer, const cb_subscription* subscriptions, size_t n_subscriptions)
+{
     cb_peer_copy(&descriptor->peer, peer);
 
     descriptor->subscriptions = cb_new(cb_subscription, n_subscriptions);
@@ -20,7 +44,12 @@ cb_peer_descriptor* cb_peer_descriptor_new(const cb_peer* peer, const cb_subscri
             cb_subscription_copy(&descriptor->subscriptions[i], &subscriptions[i]);
         }
     }
+}
 
+cb_peer_descriptor* cb_peer_descriptor_new(const cb_peer* peer, const cb_subscription* subscriptions, size_t n_subscriptions)
+{
+    cb_peer_descriptor* descriptor = cb_new(cb_peer_descriptor, 1);
+    cb_peer_descriptor_init(descriptor, peer, subscriptions, n_subscriptions);
     return descriptor;
 }
 
