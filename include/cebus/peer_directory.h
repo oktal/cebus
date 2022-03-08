@@ -3,9 +3,11 @@
 #include "cebus/bus_configuration.h"
 #include "cebus/bus.h"
 #include "cebus/cebus_bool.h"
+#include "cebus/collection/hash_map.h"
+#include "cebus/collection/array.h"
+#include "cebus/dispatch/message_proto_invoker.h"
 #include "cebus/peer.h"
 #include "cebus/peer_subscription_tree.h"
-#include "cebus/collection/hash_map.h"
 #include "cebus/subscription.h"
 #include "cebus/threading.h"
 
@@ -40,17 +42,17 @@ typedef struct cb_peer_directory
     cb_hash_map* peers;
 
     cb_hash_map* subscriptions_index;
+
+    cb_message_proto_invoker invoker;
 } cb_peer_directory;
 
 /// Initialize a new `directory` with the given bus `configuration`
-void cb_peer_directory_init(cb_peer_directory* directory, cb_bus_configuration configuration);
+void cb_peer_directory_init(cb_peer_directory* directory, cb_bus* bus, cb_bus_configuration configuration);
 
 /// Attempt to register `self` peer to the peer `directory`.
 /// Return `cb_peer_directory_ok` on success or `cb_peer_directory_error` otherwise
-cb_peer_directory_error cb_peer_directory_register(cb_peer_directory* directory, cb_bus* bus, const cb_peer* self, const cb_subscription* subscriptions, size_t n_subscriptions);
+cb_peer_directory_error cb_peer_directory_register(cb_peer_directory* directory, cb_bus* bus, const cb_peer* self, const cb_array* subscriptions);
 
 /// Un-register from the peer `directory`
 /// Return `cb_peer_directory_ok` on success or `cb_peer_directory_error` otherwise
 cb_peer_directory_error cb_peer_directory_unregister(cb_peer_directory* directory, cb_bus* bus);
-
-void cb_peer_directory_handle_peer_started(PeerStarted* message);

@@ -34,6 +34,25 @@ cb_transport_message* cb_to_transport_message(
     return message;
 }
 
+cb_transport_message* cb_transport_message_from_proto(cb_transport_message* message, const TransportMessage* proto)
+{
+    cb_message_id_from_proto(&message->id, proto->id);
+    cb_message_type_id_from_proto(&message->message_type_id, proto->message_type_id);
+    cb_originator_info_from_proto(&message->originator, proto->originator);
+    strncpy(message->environment, proto->environment, CEBUS_STR_MAX);
+    message->was_persisted = cebus_bool_from_int(proto->was_persisted);
+    message->data = cb_alloc(proto->content_bytes.len);
+    memcpy(message->data, proto->content_bytes.data, proto->content_bytes.len);
+    message->n_data = proto->content_bytes.len;
+
+    return message;
+}
+
+cb_transport_message* cb_transport_message_from_proto_new(const TransportMessage* proto)
+{
+    return cb_transport_message_from_proto(cb_new(cb_transport_message, 1), proto);
+}
+
 TransportMessage* cb_transport_message_proto_new(const cb_transport_message* message)
 {
     TransportMessage* proto = cb_new(TransportMessage, 1);

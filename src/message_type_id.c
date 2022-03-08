@@ -2,17 +2,35 @@
 
 #include "cebus/alloc.h"
 
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-void cb_message_type_id_set(cb_message_type_id* type_id, const char* value)
+void cb_message_type_id_set(cb_message_type_id* type_id, const char* fmt, ...)
 {
-    strncpy(type_id->value, value, CEBUS_STR_MAX);
+    va_list list;
+    va_start(list, fmt);
+    vsnprintf(type_id->value, CEBUS_PEER_ID_MAX, fmt, list);
+    va_end(list);
 }
 
-void cb_message_type_id_copy(cb_message_type_id* dst, const cb_message_type_id* src)
+cb_message_type_id* cb_message_type_id_from_proto_message(cb_message_type_id* type_id, const ProtobufCMessage* message, const char* namespace)
 {
-    cb_message_type_id_set(dst, src->value);
+    const ProtobufCMessageDescriptor* descriptor = message->descriptor;
+    cb_message_type_id_set(type_id, "%s.%s", namespace, descriptor->name);
+    return type_id;
+}
+
+cb_message_type_id* cb_message_type_id_copy(cb_message_type_id* dst, const cb_message_type_id* src)
+{
+    strncpy(dst->value, src->value, CEBUS_PEER_ID_MAX);
+    return dst;
+}
+
+cb_message_type_id* cb_message_type_id_clone(const cb_message_type_id* src)
+{
+    return cb_message_type_id_copy(cb_new(cb_message_type_id, 1), src);
 }
 
 cebus_bool cb_message_type_id_eq_str(const cb_message_type_id* type_id, const char* value)
@@ -25,9 +43,10 @@ cebus_bool cb_message_type_id_eq(const cb_message_type_id* lhs, const cb_message
     return cebus_bool_from_int(strncmp(lhs->value, rhs->value, CEBUS_STR_MAX) == 0);
 }
 
-void cb_message_type_id_from_proto(cb_message_type_id* type_id, const MessageTypeId* proto)
+cb_message_type_id* cb_message_type_id_from_proto(cb_message_type_id* type_id, const MessageTypeId* proto)
 {
     cb_message_type_id_set(type_id, proto->full_name);
+    return type_id;
 }
 
 MessageTypeId* cb_message_type_id_proto_new(const cb_message_type_id* type_id)

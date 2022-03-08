@@ -29,17 +29,6 @@ typedef struct cb_zmq_outbound_action
     struct cb_zmq_outbound_action* next;
 } cb_zmq_outbound_action;
 
-static void transport_message_print(const cb_transport_message* message, FILE* out)
-{
-    const originator_info* originator = &message->originator;
-
-    char uuid[36];
-    cb_uuid_print(&message->id.value, uuid, sizeof(uuid));
-
-    fprintf(out, "TransportMessage { id = %s, type_id = %s, originator = { sender_id = %s, sender_endpoint = %s, sender_machiine = %s, initiator_user_name = %s }, data = %p, size = %zu }\n",
-            uuid, message->message_type_id.value, originator->sender_id.value, originator->sender_endpoint, originator->sender_machine, originator->initiator_user_name, message->data, message->n_data);
-}
-
 // **********************
 // * Dispatch table
 // **********************
@@ -99,6 +88,17 @@ static void cb_zmq_transport_init_base(cb_transport* base)
 // **************************
 // * Private implementation
 // **************************
+//
+
+static void cb_zmq_tranposrt_outbound_socket_hash_free(cb_hash_key_t key, cb_hash_value_t value, void* user)
+{
+    cb_peer_id* peer_id = (cb_peer_id *) key;
+    cb_zmq_outbound_socket* socket = (cb_zmq_outbound_socket *) value;
+
+    cb_zmq_outbound_socket_disconnect(socket);
+    free(peer_id);
+    free(socket);
+}
 
 static cb_zmq_outbound_socket* cb_zmq_transport_get_outbound_socket(cb_zmq_transport* transport, cb_peer* peer)
 {
@@ -108,7 +108,6 @@ static cb_zmq_outbound_socket* cb_zmq_transport_get_outbound_socket(cb_zmq_trans
     {
         cb_zmq_outbound_socket_error rc;
         socket = cb_zmq_outbound_socket_new(transport->zmq_context,  &peer->peer_id, peer->endpoint, transport->socket_options);
-        cb_peer_id* peer_id;
 
         if ((rc = cb_zmq_outbound_socket_connect(socket)) != cb_zmq_outbound_socket_ok)
         {
@@ -118,11 +117,7 @@ static cb_zmq_outbound_socket* cb_zmq_transport_get_outbound_socket(cb_zmq_trans
         }
 
         CB_LOG_DBG(CB_LOG_LEVEL_DEBUG, "Connected to peer %s (%s)", peer->peer_id.value, peer->endpoint);
-
-        peer_id = cb_new(cb_peer_id, 1);
-        cb_peer_id_set(peer_id, peer->peer_id.value);
-
-        cb_hash_insert(transport->outbound_sockets, peer_id, socket);
+        cb_hash_insert(transport->outbound_sockets, cb_peer_id_clone(&peer->peer_id), socket);
     }
     else
     {
@@ -144,8 +139,6 @@ static void cb_zmq_transport_outbound_action_send(void* data)
     TransportMessage* transport_message = cb_transport_message_proto_new(message);
     size_t transport_message_size;
     uint8_t* transport_message_buf = cb_pack_message((const ProtobufCMessage *) transport_message, &transport_message_size);
-
-    transport_message_print(message, stdout);
 
     while (peer_entry != NULL)
     {
@@ -442,7 +435,7 @@ cb_zmq_transport_error cb_zmq_transport_send(
 
 void cb_zmq_transport_free(cb_zmq_transport* transport)
 {
-    cb_hash_map_free(transport->outbound_sockets);
+    cb_hash_map_free(transport->outbound_sockets, cb_zmq_tranposrt_outbound_socket_hash_free, NULL);
     zmq_ctx_destroy(transport->zmq_context);
     free(transport);
 }

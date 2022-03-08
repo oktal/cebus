@@ -18,5 +18,7 @@ void originator_info_set_sender_endpoint(originator_info *info, const char* endp
 void originator_info_set_sender_machine(originator_info *info, const char* machine);
 void originator_info_set_sender_initiator_user(originator_info *info, const char* user);
 
+originator_info* cb_originator_info_from_proto(originator_info* info, const OriginatorInfo* proto);
+
 OriginatorInfo* originator_info_proto_new(const originator_info* info);
 void originator_info_proto_free(OriginatorInfo* proto);

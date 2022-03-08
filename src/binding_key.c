@@ -44,17 +44,23 @@ void cb_binding_key_init(cb_binding_key* key)
 
 void cb_binding_key_copy(cb_binding_key* dst, const cb_binding_key* src)
 {
-    if (dst->parts != NULL)
-        free(dst->parts);
-
-    dst->parts = cb_new(char *, src->n_parts);
-    dst->n_parts = src->n_parts;
-
+    if (src->parts == NULL)
     {
-        size_t i;
-        for (i = 0; i < dst->n_parts; ++i)
+        dst->parts = NULL;
+        dst->n_parts = 0;
+    }
+    else
+    {
+        dst->parts = cb_new(char *, src->n_parts);
+        dst->n_parts = src->n_parts;
+
         {
-            dst->parts[i] = cb_strdup(src->parts[i]);
+            size_t i;
+            for (i = 0; i < src->n_parts; ++i)
+            {
+                printf("Copying binding_key part[%zu] = %s\n", i, src->parts[i]);
+                dst->parts[i] = cb_strdup(src->parts[i]);
+            }
         }
     }
 }

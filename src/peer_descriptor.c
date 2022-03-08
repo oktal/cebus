@@ -3,6 +3,8 @@
 #include "cebus/alloc.h"
 #include "cebus/subscription.h"
 
+#include "binding_key_proto.h"
+
 #include "bcl.h"
 
 cb_peer_descriptor* cb_peer_descriptor_from_proto(cb_peer_descriptor* descriptor, const PeerDescriptor *proto)
@@ -12,14 +14,12 @@ cb_peer_descriptor* cb_peer_descriptor_from_proto(cb_peer_descriptor* descriptor
     if (proto->n_subscriptions > 0)
     {
         size_t i;
-        descriptor->subscriptions =
-            cb_new(cb_subscription, proto->n_subscriptions);
-        descriptor->n_subscriptions = proto->n_subscriptions;
+        cb_array_init_with_capacity(&descriptor->subscriptions, proto->n_subscriptions, sizeof(cb_subscription));
 
-        for (i = 0; i < descriptor->n_subscriptions; ++i)
+        for (i = 0; i < proto->n_subscriptions; ++i)
         {
-            cb_subscription_from_proto(&descriptor->subscriptions[i],
-                                       proto->subscriptions[i]);
+            cb_subscription* subscription = (cb_subscription *) cb_array_push(&descriptor->subscriptions);
+            cb_subscription_from_proto(subscription, proto->subscriptions[i]);
         }
     }
 
@@ -30,48 +30,49 @@ cb_peer_descriptor* cb_peer_descriptor_from_proto(cb_peer_descriptor* descriptor
     return descriptor;
 }
 
-void cb_peer_descriptor_init(cb_peer_descriptor* descriptor, const cb_peer* peer, const cb_subscription* subscriptions, size_t n_subscriptions)
+cb_peer_descriptor* cb_peer_descriptor_init(cb_peer_descriptor* descriptor, const cb_peer* peer, const cb_array* subscriptions)
 {
     cb_peer_copy(&descriptor->peer, peer);
-
-    descriptor->subscriptions = cb_new(cb_subscription, n_subscriptions);
-    descriptor->n_subscriptions = n_subscriptions;
-
+    cb_array_init_with_capacity(&descriptor->subscriptions, cb_array_size(subscriptions), sizeof(cb_subscription));
     {
-        size_t i;
-        for (i = 0; i < n_subscriptions; ++i)
+        cb_array_iterator iter = cb_array_iter(subscriptions);
+        while (cb_array_iter_has_next(CB_ARRAY_ITER(iter)) == cebus_true)
         {
-            cb_subscription_copy(&descriptor->subscriptions[i], &subscriptions[i]);
+            const cb_subscription* src = (const cb_subscription *) cb_array_iter_get(iter);
+            cb_subscription* dst = (cb_subscription *) cb_array_push(&descriptor->subscriptions);
+            cb_subscription_copy(dst, src);
+            cb_array_iter_move_next(CB_ARRAY_ITER(iter));
         }
     }
+    return descriptor;
 }
 
-cb_peer_descriptor* cb_peer_descriptor_new(const cb_peer* peer, const cb_subscription* subscriptions, size_t n_subscriptions)
+cb_peer_descriptor* cb_peer_descriptor_new(const cb_peer* peer, const cb_array* subscriptions)
 {
-    cb_peer_descriptor* descriptor = cb_new(cb_peer_descriptor, 1);
-    cb_peer_descriptor_init(descriptor, peer, subscriptions, n_subscriptions);
-    return descriptor;
+    return cb_peer_descriptor_init(cb_new(cb_peer_descriptor, 1), peer, subscriptions);
 }
 
 void cb_peer_descriptor_free(cb_peer_descriptor* descriptor)
 {
-    free(descriptor->subscriptions);
-    free(descriptor);
+    cb_array_free(&descriptor->subscriptions, NULL, NULL);
 }
 
 void cb_peer_descriptor_proto_from(PeerDescriptor *message, const cb_peer_descriptor *descriptor)
 {
     peer_descriptor__init(message);
+    const size_t n_subscriptions = cb_array_size(&descriptor->subscriptions);
     message->peer = cb_peer_proto_new(&descriptor->peer);
 
-    message->subscriptions = cb_new(Subscription *, descriptor->n_subscriptions);
-    message->n_subscriptions = descriptor->n_subscriptions;
+    message->subscriptions = cb_new(Subscription *, n_subscriptions);
+    message->n_subscriptions = n_subscriptions;
 
     {
-        size_t i;
-        for (i = 0; i < descriptor->n_subscriptions; ++i)
+        cb_array_iterator iter = cb_array_iter(&descriptor->subscriptions);
+        size_t i = 0;
+        while (cb_array_iter_has_next(CB_ARRAY_ITER(iter)) == cebus_true)
         {
-            message->subscriptions[i] = cb_subscription_proto_new(&descriptor->subscriptions[i]);
+            message->subscriptions[i++] = cb_subscription_proto_new(cb_array_iter_get(iter));
+            cb_array_iter_move_next(CB_ARRAY_ITER(iter));
         }
     }
 

@@ -4,7 +4,6 @@
 
 void cb_binding_key_from_proto(cb_binding_key* binding_key, const BindingKey* proto)
 {
-    cb_binding_key_free(binding_key);
     binding_key->parts = cb_new(char *, proto->n_parts);
     binding_key->n_parts = proto->n_parts;
 
@@ -22,14 +21,24 @@ BindingKey* cb_binding_key_proto_new(const cb_binding_key* binding_key)
     BindingKey* message = cb_new(BindingKey, 1);
     binding_key__init(message);
 
-    message->parts = cb_new(char *, binding_key->n_parts);
-    message->n_parts = binding_key->n_parts;
-
+    if (binding_key->parts == NULL)
     {
-        size_t i;
-        for (i = 0; i < binding_key->n_parts; ++i)
+        message->parts = cb_new(char *, 1);
+        message->n_parts = 1;
+
+        message->parts[0] = CB_BINDING_KEY_TOKEN_SHARP;
+    }
+    else
+    {
+        message->parts = cb_new(char *, binding_key->n_parts);
+        message->n_parts = binding_key->n_parts;
+
         {
-            message->parts[i] = cb_strdup(binding_key->parts[i]);
+            size_t i;
+            for (i = 0; i < binding_key->n_parts; ++i)
+            {
+                message->parts[i] = cb_strdup(binding_key->parts[i]);
+            }
         }
     }
 
@@ -45,5 +54,4 @@ void cb_binding_key_proto_free(BindingKey* message)
     }
 
     free(message->parts);
-    free(message);
 }

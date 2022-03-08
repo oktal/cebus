@@ -48,5 +48,5 @@ void cb_log(cb_log_level level, const char* format_str, ...)
     vsnprintf(buf, sizeof(buf), format_str, ap);
     va_end(ap);
 
-    do_cb_log(cb_log_level_debug, buf);
+    do_cb_log(level, buf);
 }

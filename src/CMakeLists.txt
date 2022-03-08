@@ -36,7 +36,9 @@ set(cebus_SRC
     hasher.c
     log.c
     message_context.c
+    message_dispatcher.c
     message_id.c
+    message_proto_invoker.c
     message_serializer.c
     message_type_id.c
     originator_info.c

@@ -44,6 +44,9 @@ typedef struct cb_bus_impl
 
     // UUID generator
     cb_time_uuid_gen uuid_gen;
+
+    // Message dispatcher
+    cb_message_dispatcher dispatcher;
 } cb_bus_impl;
 
 // An ongoing command
@@ -61,9 +64,15 @@ typedef struct cb_command_future
     cb_future future;
 } cb_command_future;
 
+static void cb_command_future_free(cb_command_future *future)
+{
+    free(future->transport_message);
+}
 
 static void cb_command_future_destroy(void *user, void *data)
 {
+    cb_command_future* command_future = (cb_command_future *) data;
+    cb_command_future_free((cb_command_future *) data);
     free(data);
 }
 
@@ -72,6 +81,12 @@ static void cb_command_future_init(cb_command_future* command_future)
     command_future->command = NULL;
     command_future->transport_message = NULL;
     cb_future_init(&command_future->future, cb_command_future_destroy);
+}
+
+static void cb_bus_impl_message_id_task_hash_free(cb_hash_key_t key, cb_hash_value_t value, void* user)
+{
+    cb_command_future_free((cb_command_future *) value);
+    free(value);
 }
 
 static void cb_bus_impl_handle_on_message_execution_completed(cb_bus_impl* impl, const TransportMessage* transport_message)
@@ -84,11 +99,12 @@ static void cb_bus_impl_handle_on_message_execution_completed(cb_bus_impl* impl,
     }
     else
     {
-        cb_message_id id = cb_message_id_from_proto(message->source_message_id);
-        cb_command_future *command_future = (cb_command_future *)cb_hash_get(impl->message_id_tasks, &id);
+        cb_message_id message_id;
+        cb_message_id_from_proto(&message_id, message->source_message_id);
+        cb_command_future *command_future = (cb_command_future *)cb_hash_get(impl->message_id_tasks, &message_id);
 
         char uuid_str[36];
-        cb_uuid_print(&id.value, uuid_str, sizeof(uuid_str));
+        cb_uuid_print(&message_id.value, uuid_str, sizeof(uuid_str));
 
         if (command_future == NULL)
         {
@@ -103,7 +119,7 @@ static void cb_bus_impl_handle_on_message_execution_completed(cb_bus_impl* impl,
             }
 
             CB_LOG_DBG(CB_LOG_LEVEL_WARN,
-                       "Received unknown command from %s (%s) with id %s",
+                       "Received unknown response from %s (%s) with id %s",
                        originator_endpoint, originator_peer, uuid_str);
         }
         else
@@ -133,6 +149,13 @@ static void cb_bus_impl_on_transport_message(const TransportMessage* message, vo
     {
         cb_bus_impl_handle_on_message_execution_completed(impl, message);
     }
+    else
+    {
+        cb_message_type_id message_type_id;
+        cb_transport_message* transport_message = cb_transport_message_from_proto_new(message);
+        cb_message_type_id_from_proto(&message_type_id, message->message_type_id);
+        cb_message_dispatcher_dispatch(&impl->dispatcher, &message_type_id, transport_message);
+    }
 }
 
 static cb_peer_id* cb_bus_impl_peer_id(cb_bus* base)
@@ -151,6 +174,7 @@ static cb_bus_error cb_bus_impl_init(cb_bus* base)
     impl->message_id_tasks = cb_hash_map_new(cb_message_id_hash, cb_message_id_hash_eq);
     memset(impl->environment, 0, sizeof(impl->environment));
 
+    cb_message_dispatcher_init(&impl->dispatcher);
     return cb_bus_ok;
 }
 
@@ -182,6 +206,15 @@ static cb_future cb_bus_impl_send_to_async(cb_bus* base, const cb_command* comma
 
     command_future->command = command;
     command_future->transport_message = transport_message;
+
+    {
+        char uuid_str[36];
+        memset(uuid_str, 0, sizeof(uuid_str));
+        cb_uuid_print(&transport_message->id.value, uuid_str, sizeof(uuid_str));
+        CB_LOG_DBG(CB_LOG_LEVEL_TRACE, "Inserting command task for %s with id %s", 
+                transport_message->message_type_id.value, uuid_str);
+    }
+
     cb_hash_insert(impl->message_id_tasks, &transport_message->id, command_future);
 
     cb_peer_list_add(peers, cb_peer_clone(peer));
@@ -202,6 +235,13 @@ static cb_command_result cb_bus_impl_send_to(cb_bus* base, const cb_command* com
     cb_command_result result = command_future->result;
     cb_future_destroy(&future);
     return result;
+}
+
+static void cb_bus_impl_handle_with(cb_bus* base, const cb_message_type_id* message_type_id, cb_message_callback callback, void* user)
+{
+    cb_bus_impl* impl = (cb_bus_impl *) base;
+    cb_message_dispatcher* dispatcher = &impl->dispatcher;
+    cb_message_dispatcher_add(dispatcher, message_type_id, callback, user);
 }
 
 static cb_bus_error cb_bus_impl_start(cb_bus* base)
@@ -242,7 +282,7 @@ static cb_bus_error cb_bus_impl_stop(cb_bus* base)
 static void cb_bus_impl_free(cb_bus* base)
 {
     cb_bus_impl* impl = (cb_bus_impl *) base;
-    cb_hash_map_free(impl->message_id_tasks);
+    cb_hash_map_free(impl->message_id_tasks, cb_bus_impl_message_id_task_hash_free, NULL);
     cb_transport_free(impl->transport);
     free(impl);
 }
@@ -252,6 +292,7 @@ static void cb_bus_impl_init_base(cb_bus* base)
     CB_BUS_VIRT_SET(base, init, cb_bus_impl_init);
     CB_BUS_VIRT_SET(base, peer_id, cb_bus_impl_peer_id);
     CB_BUS_VIRT_SET(base, configure, cb_bus_impl_configure);
+    CB_BUS_VIRT_SET(base, handle_with, cb_bus_impl_handle_with);
     CB_BUS_VIRT_SET(base, send_to, cb_bus_impl_send_to);
     CB_BUS_VIRT_SET(base, start, cb_bus_impl_start);
     CB_BUS_VIRT_SET(base, stop, cb_bus_impl_stop);
@@ -289,6 +330,11 @@ cebus_bool cb_bus_is_running(cb_bus* bus)
 cb_bus_error cb_bus_configure(cb_bus* bus, const cb_peer_id* peer_id, const char* environment)
 {
     return CB_BUS_VIRT_CALL(bus, configure, peer_id, environment);
+}
+
+void cb_bus_handle_with(cb_bus* bus, const cb_message_type_id* message_type_id, cb_message_callback callback, void* user)
+{
+    return CB_BUS_VIRT_CALL(bus, handle_with, message_type_id, callback, user);
 }
 
 void cb_bus_publish(cb_bus* bus, const ProtobufCMessage* event)

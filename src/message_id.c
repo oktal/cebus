@@ -18,13 +18,13 @@ static Bcl__Guid* cb_guid_proto_new(const cb_uuid_t* uuid)
     return proto;
 }
 
-static cb_message_id cb_message_id_from_guid(const Bcl__Guid* guid)
+static cb_message_id* cb_message_id_from_guid(cb_message_id* id, const Bcl__Guid* guid)
 {
-    cb_message_id id;
-    uint8_t *bits = id.value.bits;
+    uint8_t bits[CB_UUID_BITS];
     memcpy(bits, &guid->hi, BCL_GUID_BYTES);
     memcpy(bits + BCL_GUID_BYTES, &guid->lo, BCL_GUID_BYTES);
 
+    cb_uuid_init(&id->value, bits, CB_UUID_BITS);
     return id;
 }
 
@@ -33,9 +33,9 @@ static void cb_guid_proto_free(Bcl__Guid* guid)
     free(guid);
 }
 
-cb_message_id cb_message_id_from_proto(const MessageId *proto)
+cb_message_id* cb_message_id_from_proto(cb_message_id* message_id, const MessageId *proto)
 {
-    return cb_message_id_from_guid(proto->value);
+    return cb_message_id_from_guid(message_id, proto->value);
 }
 
 void cb_message_id_next(cb_message_id* message_id, cb_time_uuid_gen* gen)
@@ -55,7 +55,6 @@ MessageId* cb_message_id_proto_new(const cb_message_id* message_id)
 void cb_message_id_proto_free(MessageId* proto)
 {
     cb_guid_proto_free(proto->value);
-    free(proto);
 }
 
 void cb_message_id_hash(cb_hasher* hasher, cb_hash_key_t message_id_key)

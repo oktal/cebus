@@ -17,47 +17,14 @@
 #include "peer_descriptor.pb-c.h"
 #include "register_peer_command.pb-c.h"
 
-#if 0
-typedef struct sleep_context
+static void cb_peer_directory_init_subscriptions(cb_array* subscriptions)
 {
-    cb_future future;
+    cb_array_init(subscriptions, sizeof(cb_subscription));
 
-    int secs;
-} sleep_context;
-
-void* sleep_thread_main(void *data)
-{
-    sleep_context* context = (sleep_context *)data;
-    sleep(context->secs);
-    cb_future_set(&context->future, NULL);
-
-    return NULL;
+    cb_subscription* peer_started_subscription = (cb_subscription *) cb_array_push(subscriptions);
+    cb_message_type_id_set(&peer_started_subscription->message_type_id, "Abc.Zebus.Directory.PeerStarted");
+    cb_binding_key_init(&peer_started_subscription->binding_key);
 }
-
-void sleep_async(int secs)
-{
-    sleep_context* context = cb_new(sleep_context, 1);
-    cb_thread thread;
-
-    context->secs= secs;
-
-    cb_future_init(&context->future);
-    cb_thread_init(&thread);
-
-    cb_thread_spawn(&thread, sleep_thread_main, context);
-    cb_future_get(&context->future);
-
-    cb_thread_join(&thread);
-    cb_thread_destroy(&thread);
-}
-
-int main()
-{
-    printf("Sleeping 5 seconds...\n");
-    sleep_async(5);
-    printf("... beep beep beep\n");
-}
-#endif
 
 int main(int argc, const char* argv[])
 {
@@ -69,21 +36,21 @@ int main(int argc, const char* argv[])
     cb_transport* transport;
     cb_bus_configuration bus_configuration;
     cb_peer_directory directory;
+    cb_array subscriptions;
 
     char* directory_endpoints[4] = { NULL, NULL, NULL, NULL };
 
-    if (argc < 4)
+    if (argc < 5)
     {
-        fprintf(stderr, "usage ./cebus [directory-endpoint] [endpoint] [environment]\n");
+        fprintf(stderr, "usage ./cebus [directory-endpoint] [peer_id] [endpoint] [environment]\n");
         return 0;
     }
 
-
-    cb_peer_id_set(&self.peer_id, "Abc.Peer.0");
-    cb_peer_set_endpoint(&self, argv[2]);
+    cb_peer_id_set(&self.peer_id, argv[2]);
+    cb_peer_set_endpoint(&self, argv[3]);
 
     cb_zmq_socket_options_init_default(&options);
-    strcpy(zmq_configuration.inbound_endpoint, argv[2]);
+    strcpy(zmq_configuration.inbound_endpoint, argv[3]);
 
     transport = cb_zmq_transport_new(zmq_configuration, options);
 
@@ -94,7 +61,7 @@ int main(int argc, const char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    if ((err = cb_bus_configure(bus, &self.peer_id, argv[3])) != cb_bus_ok)
+    if ((err = cb_bus_configure(bus, &self.peer_id, argv[4])) != cb_bus_ok)
     {
         CB_LOG_DBG(CB_LOG_LEVEL_ERROR, "Failed to configure bus: %d", err);
         exit(EXIT_FAILURE);
@@ -109,11 +76,12 @@ int main(int argc, const char* argv[])
     directory_endpoints[0] = (char *) argv[1];
     bus_configuration.directoryEndpoints = directory_endpoints;
 
-    cb_peer_directory_init(&directory, bus_configuration);
+    cb_peer_directory_init(&directory, bus, bus_configuration);
     cb_peer_set_endpoint(&self, cb_transport_inbound_endpoint(transport));
 
     CB_LOG_DBG(CB_LOG_LEVEL_INFO, "Registering to directory ...");
-    cb_peer_directory_register(&directory, bus, &self, NULL, 0);
+    cb_peer_directory_init_subscriptions(&subscriptions);
+    cb_peer_directory_register(&directory, bus, &self, &subscriptions);
 
     getchar();
 

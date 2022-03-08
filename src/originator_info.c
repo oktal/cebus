@@ -26,6 +26,20 @@ void originator_info_set_sender_initiator_user(originator_info* originator, cons
     strncpy(originator->initiator_user_name, user, CEBUS_STR_MAX);
 }
 
+originator_info* cb_originator_info_from_proto(originator_info* info, const OriginatorInfo* proto)
+{
+    if (proto->sender_id != NULL)
+        cb_peer_id_set(&info->sender_id, proto->sender_id->value);
+    if (proto->sender_endpoint != NULL)
+        originator_info_set_sender_endpoint(info, proto->sender_endpoint);
+    if (proto->sender_machine != NULL)
+        originator_info_set_sender_machine(info, proto->sender_machine);
+    if (proto->initiator_user_name != NULL)
+        originator_info_set_sender_initiator_user(info, proto->initiator_user_name);
+
+    return info;
+}
+
 OriginatorInfo* originator_info_proto_new(const originator_info* info)
 {
     OriginatorInfo* proto = cb_new(OriginatorInfo, 1);
@@ -45,5 +59,4 @@ void originator_info_proto_free(OriginatorInfo* proto)
     free(proto->sender_machine);
     free(proto->sender_endpoint);
     cb_peer_id_proto_free(proto->sender_id);
-    free(proto);
 }

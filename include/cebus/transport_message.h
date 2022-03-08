@@ -31,5 +31,8 @@ cb_transport_message* cb_to_transport_message(
         const char* sender_endpoint,
         const char* environment);
 
+cb_transport_message* cb_transport_message_from_proto(cb_transport_message* message, const TransportMessage* proto);
+cb_transport_message* cb_transport_message_from_proto_new(const TransportMessage* proto);
+
 TransportMessage* cb_transport_message_proto_new(const cb_transport_message* message);
 void cb_transport_message_proto_free(TransportMessage* message);
