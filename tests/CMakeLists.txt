@@ -18,8 +18,6 @@ function(cebus_test_proto test_name proto_name)
 
     protobuf_generate_c(TEST_PROTO_SRCS TEST_PROTO_HDRS PROTOS ${TEST_PROTO})
 
-    # message(FATAL_ERROR "${TEST_PROTO_SRCS}")
-
     add_executable(${TEST_EXECUTABLE} ${TEST_SOURCE} ${TEST_PROTO_SRCS} munit.c)
     target_include_directories(${TEST_EXECUTABLE} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
     target_link_libraries(${TEST_EXECUTABLE} PRIVATE cebus)
@@ -27,6 +25,7 @@ function(cebus_test_proto test_name proto_name)
 endfunction()
 
 cebus_test_proto(binding_key_test test_routable_event)
+cebus_test(array_test)
 cebus_test(hasher_test)
 cebus_test(hash_map_test)
 cebus_test(peer_id_test)

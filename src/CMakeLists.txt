@@ -25,6 +25,7 @@ protobuf_generate_c(PROTO_SRCS PROTO_HDRS PROTOS ${cebus_PROTOS})
 
 set(cebus_SRC
     alloc.c
+    array.c
     atomic_c11.c
     bcl.c
     binding_key.c
