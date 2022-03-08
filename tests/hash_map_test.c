@@ -21,11 +21,11 @@ const size_t digits_len = sizeof(digits) / sizeof(*digits);
 const char* digits_str_en[] = { "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
 const char* digits_str_fr[] = { "zero", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf" };
 
-#define DIGIT_ENTRY_DELETED -1
+#define DIGIT_ENTRY_DELETED (uint64_t) -1
 
 typedef struct digit_entry
 {
-    int64_t value;
+    uint64_t value;
 } digit_entry;
 
 MunitResult should_insert(const MunitParameter params[], void* data)
@@ -50,7 +50,7 @@ MunitResult should_insert(const MunitParameter params[], void* data)
 
     munit_assert_ullong(cb_hash_len(digits_map), ==, digits_len);
 
-    cb_hash_map_free(digits_map);
+    cb_hash_map_free(digits_map, NULL, NULL);
     return MUNIT_OK;
 }
 
@@ -74,7 +74,7 @@ MunitResult should_get(const MunitParameter params[], void* data)
 
     munit_assert_ullong(cb_hash_len(digits_map), ==, digits_len);
 
-    cb_hash_map_free(digits_map);
+    cb_hash_map_free(digits_map, NULL, NULL);
     return MUNIT_OK;
 }
 
@@ -102,12 +102,12 @@ MunitResult should_remove(const MunitParameter params[], void* data)
     }
 
     munit_assert_ullong(cb_hash_len(digits_map), ==, 0);
-    cb_hash_map_free(digits_map);
+    cb_hash_map_free(digits_map, NULL, NULL);
 
     return MUNIT_OK;
 }
 
-static void cb_digit_entry_destroy(cb_hash_key_t key, cb_hash_value_t value, void* user)
+static void digit_entry_destroy(cb_hash_key_t key, cb_hash_value_t value, void* user)
 {
     digit_entry* entry = (digit_entry *) value;
     entry->value = DIGIT_ENTRY_DELETED;
@@ -128,7 +128,7 @@ MunitResult should_clear(const MunitParameter params[], void* data)
     }
 
     munit_assert_uint64(cb_hash_len(digits_map), ==, digits_len);
-    cb_hash_clear(digits_map, cb_digit_entry_destroy, NULL);
+    cb_hash_clear(digits_map, digit_entry_destroy, NULL);
     munit_assert_uint64(cb_hash_len(digits_map), ==, 0);
 
     for (i = 0; i < digits_len; ++i)
@@ -137,7 +137,7 @@ MunitResult should_clear(const MunitParameter params[], void* data)
         munit_assert_int64(entry->value, ==, DIGIT_ENTRY_DELETED);
     }
 
-    cb_hash_map_free(digits_map);
+    cb_hash_map_free(digits_map, NULL, NULL);
     free(entries);
 
     return MUNIT_OK;

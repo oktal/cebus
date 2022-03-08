@@ -56,9 +56,6 @@ typedef struct cb_hash_map
 /// Create a new hashmap with `hash_func` as the hashing function and `key_eq` as the key comparator
 cb_hash_map *cb_hash_map_new(cb_hash_func hash_func, cb_hash_eq key_eq);
 
-/// Free the underlying memory owned by the `map`
-void cb_hash_map_free(cb_hash_map* map);
-
 /// Get the value from the `map` corresponding to the `key` or `NULL` if not present
 cb_hash_value_t cb_hash_get(cb_hash_map* map, const cb_hash_key_t key);
 
@@ -78,6 +75,10 @@ size_t cb_hash_len(const cb_hash_map* map);
 
 /// Iterate over every entry of the `map` and call the `func` callback for each entry
 void cb_hash_foreach(const cb_hash_map* map, cb_hash_iter func, void* user);
+//
+/// Free the underlying memory owned by the `map` and call the `destructor` function with the `user`-provided data
+/// on every entry of the map
+void cb_hash_map_free(cb_hash_map* map, cb_hash_dtor destructor, void* user);
 
 /// Hash a single `uint64_t` key
 void cb_hash_u64(cb_hasher* hasher, cb_hash_key_t key);
