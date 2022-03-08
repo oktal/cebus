@@ -77,6 +77,15 @@ void cb_uuid_generate_time(cb_time_uuid_gen* gen, cb_uuid_t* uuid)
     cb_time_uuid_gen_ticks(gen, cb_time_uuid_gen_utc_now_ticks(), uuid);
 }
 
+cb_uuid_t* cb_uuid_init(cb_uuid_t* uuid, uint8_t* bytes, size_t n)
+{
+    if (n > CB_UUID_BITS)
+        n = CB_UUID_BITS;
+
+    memcpy(uuid->bits, bytes, n);
+    return uuid;
+}
+
 void cb_uuid_print(const cb_uuid_t* uuid, char* buf, size_t size)
 {
     static const size_t offsets[] = { 0, 2, 4, 6, 9, 11, 14, 16, 19, 21, 24, 26, 28, 30, 32, 34 };

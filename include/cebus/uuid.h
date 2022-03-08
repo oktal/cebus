@@ -28,6 +28,9 @@ cebus_bool cb_time_uuid_gen_init_random(cb_time_uuid_gen* gen);
 /// Generate a time-based uuid based on https://www.famkruithof.net/guid-uuid-timebased.html
 void cb_uuid_generate_time(cb_time_uuid_gen* gen, cb_uuid_t* uuid);
 
+/// Initialize a new uuid from a stream of `bytes` of length `n`
+cb_uuid_t* cb_uuid_init(cb_uuid_t* uuid, uint8_t* bytes, size_t n);
+
 /// Print a string representation of the given `uuid` to a buffer pointed by `buf`
 void cb_uuid_print(const cb_uuid_t* uuid, char* buf, size_t size);
 
