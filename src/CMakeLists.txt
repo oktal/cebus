@@ -29,7 +29,6 @@ set(cebus_SRC
     atomic_c11.c
     bcl.c
     binding_key.c
-    binding_key_proto.c
     bus.c
     command.c
     hash_map.c

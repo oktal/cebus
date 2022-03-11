@@ -6,6 +6,9 @@
 #include <stdint.h>
 
 #include <protobuf-c/protobuf-c.h>
+#include <protobuf-cebus/protobuf-cebus.h>
+
+#include "binding_key.pb-c.h"
 
 #define CB_BINDING_KEY_ALL "*"
 #define CB_BINDING_KEY_EMPTY "#"
@@ -63,6 +66,18 @@ cebus_bool cb_binding_key_is_star(cb_binding_key key, size_t index);
 /// Return the number of fragments that constitute the `key`
 size_t cb_binding_key_fragment_count(cb_binding_key key);
 
+/// Initialize a `cb_binding_key` from a `BindingKey` protobuf message
+void cb_binding_key_from_proto(cb_binding_key* binding_key, const BindingKey* proto);
+
+/// Create a new `BindingKey` protobuf message from a `cb_binding_key`
+BindingKey* cb_binding_key_proto_new(const cb_binding_key* binding_key);
+
+/// Free the allocated memory by a `BindingKey` protobuf message
+void cb_binding_key_proto_free(BindingKey* proto);
+
+/// Create a `binding_key` from a protobuf-generated `proto` message
+cb_binding_key cb_binding_key_from_message(const ProtobufCMessage* message, const ProtobufCebusMessageDescriptor* descriptor);
+
 /// Create a `binding_key` from a string representation of the form `part1.part2.partn`
 cb_binding_key cb_binding_key_from_str(const char* str, ...);
 
@@ -101,7 +116,7 @@ cebus_bool cb_binding_key_fragment_eq(cb_binding_key_fragment lhs, cb_binding_ke
 void cb_binding_key_fragment_free(cb_binding_key_fragment* fragment);
 
 cb_binding_key_builder cb_binding_key_builder_with_capacity(size_t count);
-cebus_bool cb_binding_key_builder_add_bool(cb_binding_key_builder* builder, protobuf_c_boolean val);
+cebus_bool cb_binding_key_builder_add_bool(cb_binding_key_builder* builder, cebus_bool val);
 cebus_bool cb_binding_key_builder_add_float(cb_binding_key_builder* builder, float val);
 cebus_bool cb_binding_key_builder_add_double(cb_binding_key_builder* builder, double val);
 cebus_bool cb_binding_key_builder_add_u32(cb_binding_key_builder* builder, uint32_t val);

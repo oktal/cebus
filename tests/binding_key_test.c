@@ -2,7 +2,6 @@
 
 #include "cebus/binding_key.h"
 #include "test_routable_event.pb-c.h"
-#include "test_routable_event.pb-cb.h"
 
 #include <stdio.h>
 
@@ -82,17 +81,17 @@ MunitResult should_string_binding_key(const MunitParameter params[], void* data)
     return MUNIT_OK;
 }
 
-MunitResult should_create_binding_key_from_proto_binding(const MunitParameter params[], void* data)
+MunitResult should_create_binding_key_from_proto_message(const MunitParameter params[], void* data)
 {
-    TestRoutableEventBinding binding = TEST_ROUTABLE_EVENT_BINDING__INIT;
+    TestRoutableEvent binding;
     cb_binding_key key;
     char* str;
 
     binding.str_field = "test_binding";
-    binding.int_field = "45";
-    binding.bool_field = "0";
+    binding.int_field = 45;
+    binding.bool_field = cebus_false;
 
-    key = test_routable_event_binding__key(&binding);
+    key = cb_binding_key_from_message((const ProtobufCMessage *) &binding, &test_routable_event__message_descriptor);
     str = cb_binding_key_str(key);
 
     munit_assert_ullong(cb_binding_key_fragment_count(key), ==, 3);
@@ -105,15 +104,15 @@ MunitResult should_create_binding_key_from_proto_binding(const MunitParameter pa
     return MUNIT_OK;
 }
 
-MunitResult should_create_partial_binding_key_from_proto_binding(const MunitParameter params[], void* data)
+MunitResult should_create_partial_binding_key_from_proto_message(const MunitParameter params[], void* data)
 {
-    TestRoutableEventBinding binding = TEST_ROUTABLE_EVENT_BINDING__INIT;
+    TestRoutableEvent binding = TEST_ROUTABLE_EVENT__INIT;
     cb_binding_key key;
     char* str;
 
     binding.str_field = "test_binding";
 
-    key = test_routable_event_binding__key(&binding);
+    key = cb_binding_key_from_message((const ProtobufCMessage *) &binding, &test_routable_event__message_descriptor);
     str = cb_binding_key_str(key);
 
     munit_assert_ullong(cb_binding_key_fragment_count(key), ==, 3);
@@ -121,29 +120,6 @@ MunitResult should_create_partial_binding_key_from_proto_binding(const MunitPara
     munit_assert_string_equal(cb_binding_key_get_fragment(key, 1).value, CB_BINDING_KEY_ALL);
     munit_assert_string_equal(cb_binding_key_get_fragment(key, 2).value, CB_BINDING_KEY_ALL);
     munit_assert_string_equal(str, "test_binding.*.*");
-
-    free(str);
-    return MUNIT_OK;
-}
-
-MunitResult should_create_binding_key_from_proto(const MunitParameter params[], void* data)
-{
-    TestRoutableEvent event = TEST_ROUTABLE_EVENT__INIT;
-    cb_binding_key key;
-    char* str;
-
-    event.str_field = "test_value";
-    event.int_field = 8765181;
-    event.bool_field = 1;
-
-    key = test_routable_event__key(&event);
-    str = cb_binding_key_str(key);
-
-    munit_assert_ullong(cb_binding_key_fragment_count(key), ==, 3);
-    munit_assert_string_equal(cb_binding_key_get_fragment(key, 0).value, "test_value");
-    munit_assert_string_equal(cb_binding_key_get_fragment(key, 1).value, "1");
-    munit_assert_string_equal(cb_binding_key_get_fragment(key, 2).value, "8765181");
-    munit_assert_string_equal(str, "test_value.1.8765181");
 
     free(str);
     return MUNIT_OK;
@@ -173,8 +149,7 @@ CEBUS_DECLARE_TEST_SUITE(
 
     CEBUS_TEST(should_create_binding_key_from_fragments),
     CEBUS_TEST(should_string_binding_key),
-    CEBUS_TEST(should_create_binding_key_from_proto_binding),
-    CEBUS_TEST(should_create_partial_binding_key_from_proto_binding),
-    CEBUS_TEST(should_create_binding_key_from_proto),
+    CEBUS_TEST(should_create_binding_key_from_proto_message),
+    CEBUS_TEST(should_create_partial_binding_key_from_proto_message),
     CEBUS_TEST(should_create_binding_key_from_str)
 )

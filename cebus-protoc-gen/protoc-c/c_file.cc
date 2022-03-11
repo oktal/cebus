@@ -168,6 +168,9 @@ void FileGenerator::GenerateHeader(io::Printer* printer) {
     }
   }
 
+  // EXTENSION: insertion point at include level
+  printer->Print("// @@protoc_insertion_point(includes)");
+
   printer->Print("\n");
 
   // Generate forward declarations of classes.
@@ -229,6 +232,12 @@ void FileGenerator::GenerateHeader(io::Printer* printer) {
     service_generators_[i]->GenerateDescriptorDeclarations(printer);
   }
 
+  // EXTENSION: insertion point at global scope level
+  printer->Print(
+    "\n"
+    "// @@protoc_insertion_point(global_scope)"
+  );
+
   printer->Print(
     "\n"
     "PROTOBUF_C__END_DECLS\n"
@@ -250,6 +259,9 @@ void FileGenerator::GenerateSource(io::Printer* printer) {
     "filename", file_->name(),
     "basename", StripProto(file_->name()));
 
+  // EXTENSION: insertion point at include level
+  printer->Print("// @@protoc_insertion_point(includes)\n");
+
   const ProtobufCFileOptions opt = file_->options().GetExtension(pb_c_file);
 
   for (int i = 0; i < file_->message_type_count(); i++) {
@@ -269,6 +281,12 @@ void FileGenerator::GenerateSource(io::Printer* printer) {
   for (int i = 0; i < file_->service_count(); i++) {
     service_generators_[i]->GenerateCFile(printer);
   }
+
+  // EXTENSION: insertion point at global scope level
+  printer->Print(
+    "\n"
+    "// @@protoc_insertion_point(global_scope)"
+  );
 
 }
 

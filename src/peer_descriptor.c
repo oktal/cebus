@@ -1,9 +1,8 @@
 #include "cebus/peer_descriptor.h"
 
 #include "cebus/alloc.h"
+#include "cebus/binding_key.h"
 #include "cebus/subscription.h"
-
-#include "binding_key_proto.h"
 
 #include "bcl.h"
 

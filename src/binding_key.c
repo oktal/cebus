@@ -148,6 +148,134 @@ char* cb_binding_key_str(cb_binding_key key)
     return out_str;
 }
 
+void cb_binding_key_from_proto(cb_binding_key* binding_key, const BindingKey* proto)
+{
+    binding_key->parts = cb_new(char *, proto->n_parts);
+    binding_key->n_parts = proto->n_parts;
+
+    {
+        size_t i;
+        for (i = 0; i < proto->n_parts; ++i)
+        {
+            binding_key->parts[i] = cb_strdup(proto->parts[i]);
+        }
+    }
+}
+
+BindingKey* cb_binding_key_proto_new(const cb_binding_key* binding_key)
+{
+    BindingKey* message = cb_new(BindingKey, 1);
+    binding_key__init(message);
+
+    if (binding_key->parts == NULL)
+    {
+        message->parts = cb_new(char *, 1);
+        message->n_parts = 1;
+
+        message->parts[0] = CB_BINDING_KEY_TOKEN_SHARP;
+    }
+    else
+    {
+        message->parts = cb_new(char *, binding_key->n_parts);
+        message->n_parts = binding_key->n_parts;
+
+        {
+            size_t i;
+            for (i = 0; i < binding_key->n_parts; ++i)
+            {
+                message->parts[i] = cb_strdup(binding_key->parts[i]);
+            }
+        }
+    }
+
+    return message;
+}
+
+void cb_binding_key_proto_free(BindingKey* message)
+{
+    size_t i;
+    for (i = 0; i < message->n_parts; ++i)
+    {
+        free(message->parts[i]);
+    }
+
+    free(message->parts);
+}
+
+cb_binding_key cb_binding_key_from_message(const ProtobufCMessage* message, const ProtobufCebusMessageDescriptor* descriptor)
+{
+    if (descriptor->routing_fields == NULL)
+    {
+        cb_binding_key binding_key;
+        cb_binding_key_init(&binding_key);
+        return binding_key;
+    }
+    else
+    {
+        cb_binding_key_builder builder = cb_binding_key_builder_with_capacity(descriptor->n_routing_fields);
+        size_t i;
+
+        for (i = 0; i < descriptor->n_routing_fields; ++i)
+        {
+            const ProtobufCebusRoutingFieldDescriptor* routing_field_descriptor = descriptor->routing_fields + i;
+            const ProtobufCFieldDescriptor* field_descriptor = routing_field_descriptor->descriptor;
+            const void* member = ((const char *) message) + field_descriptor->offset;
+
+            if (field_descriptor->label == PROTOBUF_C_LABEL_OPTIONAL)
+            {
+                const void *qmember =
+                    ((const char *) message) + field_descriptor->quantifier_offset;
+                const protobuf_c_boolean has = *(const protobuf_c_boolean *) qmember;
+
+                if (!has)
+                {
+                    cb_binding_key_builder_add_str(&builder, CB_BINDING_KEY_ALL);
+                    continue;
+                }
+            }
+
+            switch (field_descriptor->type)
+            {
+                case PROTOBUF_C_TYPE_BOOL:
+                    cb_binding_key_builder_add_bool(&builder, cebus_bool_from_int(*(protobuf_c_boolean *) member));
+                    break;
+                case PROTOBUF_C_TYPE_SFIXED32:
+                case PROTOBUF_C_TYPE_SINT32:
+                case PROTOBUF_C_TYPE_INT32:
+                    cb_binding_key_builder_add_i32(&builder, *(int32_t *) member);
+                    break;
+                case PROTOBUF_C_TYPE_FIXED32:
+                case PROTOBUF_C_TYPE_UINT32:
+                    cb_binding_key_builder_add_u32(&builder, *(uint32_t *) member);
+                    break;
+                case PROTOBUF_C_TYPE_SFIXED64:
+                case PROTOBUF_C_TYPE_SINT64:
+                case PROTOBUF_C_TYPE_INT64:
+                    cb_binding_key_builder_add_i64(&builder, *(int32_t *) member);
+                    break;
+                case PROTOBUF_C_TYPE_FIXED64:
+                case PROTOBUF_C_TYPE_UINT64:
+                    cb_binding_key_builder_add_u64(&builder, *(uint64_t *) member);
+                    break;
+                case PROTOBUF_C_TYPE_FLOAT:
+                    cb_binding_key_builder_add_float(&builder, *(float *) member);
+                    break;
+                case PROTOBUF_C_TYPE_DOUBLE:
+                    cb_binding_key_builder_add_double(&builder, *(double *) member);
+                    break;
+                case PROTOBUF_C_TYPE_STRING:
+                    cb_binding_key_builder_add_str(&builder, *(char *const *)member);
+                    break;
+                default:
+                    assert(false && "Unsupported type for binding key");
+            }
+
+        }
+
+        return cb_binding_key_build(CB_MOVE(&builder));
+    }
+}
+
 cb_binding_key cb_binding_key_from_str(const char* fmt, ...)
 {
     size_t count = 0, len = 0;
@@ -264,9 +392,9 @@ cb_binding_key_builder cb_binding_key_builder_with_capacity(size_t count)
     return cb_binding_key_builder_new(cb_new(char *, count), count);
 }
 
-cebus_bool cb_binding_key_builder_add_bool(cb_binding_key_builder* builder, protobuf_c_boolean val)
+cebus_bool cb_binding_key_builder_add_bool(cb_binding_key_builder* builder, cebus_bool val)
 {
-    return cb_binding_key_builder_add(builder, "%d", val);
+    return cb_binding_key_builder_add(builder, "%d", !!val);
 }
 
 cebus_bool cb_binding_key_builder_add_float(cb_binding_key_builder* builder, float val)

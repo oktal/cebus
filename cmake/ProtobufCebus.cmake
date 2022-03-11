@@ -23,7 +23,6 @@ function(protobuf_generate_c SRCS HDRS)
   endif()
 
   set(protobuf_generate_c_GENERATE_EXTENSIONS .pb-c.h .pb-c.c)
-  set(protobuf_generate_cebus_GENERATE_EXTENSIONS .pb-cb.h .pb-cb.c)
 
   set(_protobuf_include_path -I${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -59,13 +58,6 @@ function(protobuf_generate_c SRCS HDRS)
       DEPENDS ${_abs_file} ${PROTOC_BIN} $<TARGET_FILE:protoc-cebus-gen>
       COMMENT "Running C protocol buffer compiler on ${_proto}"
       VERBATIM )
-  endforeach()
-
-  foreach(_ext ${protobuf_generate_cebus_GENERATE_EXTENSIONS})
-     set(protobuf_cebus_generated "${protobuf_generate_c_PROTOC_OUT_DIR}/${_possible_rel_dir}${_basename}${_ext}")
-     if (EXISTS "${protobuf_cebus_generated}")
-       list(APPEND _generated_srcs_all "${protobuf_cebus_generated}")
-     endif()
   endforeach()
 
   set_source_files_properties(${_generated_srcs_all} PROPERTIES GENERATED TRUE)

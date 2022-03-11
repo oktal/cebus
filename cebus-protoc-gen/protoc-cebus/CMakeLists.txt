@@ -1,9 +1,6 @@
 find_package(Threads REQUIRED)
 
 set(PROTOC_CEBUS_SRC
-    field_generator.cc
-    file_generator.cc
-    message_generator.cc
     main.cc
 )
 

@@ -1,9 +1,8 @@
 #include "cebus/subscription.h"
 
 #include "cebus/alloc.h"
+#include "cebus/binding_key.h"
 #include "cebus/message_type_id.h"
-
-#include "binding_key_proto.h"
 
 void cb_subscription_from_proto(cb_subscription* subscription, const Subscription* proto)
 {
