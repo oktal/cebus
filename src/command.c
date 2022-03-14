@@ -1,18 +1,53 @@
 #include "cebus/command.h"
-
 #include "cebus/alloc.h"
+
 #include "message_serializer.h"
 
-#include <stdio.h>
+#include "protobuf-c/protobuf-c.h"
 
-cb_command cb_command_from_proto(const ProtobufCMessage *message, const char *proto_namespace)
+#include <string.h>
+
+void cb_command_init(cb_command* command)
+{
+    command->data = NULL;
+    command->n_data = 0;
+}
+
+cb_command* cb_command_copy(cb_command* dst, const cb_command* src)
+{
+    dst->data = cb_alloc(src->n_data);
+    memcpy(dst->data, src->data, src->n_data);
+    dst->n_data = src->n_data;
+
+    cb_message_type_id_copy(&dst->message_type_id, &src->message_type_id);
+    return dst;
+}
+
+cb_command* cb_command_move(cb_command* dst, cb_command* src)
+{
+    dst->data = src->data;
+    dst->n_data = src->n_data;
+    cb_message_type_id_copy(&dst->message_type_id, &src->message_type_id);
+
+    src->data = NULL;
+    src->n_data = 0;
+
+    return dst;
+}
+
+cb_command cb_command_from_proto(ProtobufCebusCommand proto)
 {
     cb_command command;
-    char full_name[CEBUS_STR_MAX];
-    const ProtobufCMessageDescriptor* descriptor = message->descriptor;
+    const ProtobufCebusMessageDescriptor* cebus_descriptor = proto.descriptor;
+    const ProtobufCMessageDescriptor* descriptor = proto.message->descriptor;
 
-    snprintf(full_name, CEBUS_STR_MAX, "%s.%s", proto_namespace, descriptor->name);
-    cb_message_type_id_set(&command.message_type_id, full_name);
-    command.data = cb_pack_message(message , &command.n_data);
+    cb_message_type_id_set(&command.message_type_id, "%s.%s", cebus_descriptor->namespace_name, descriptor->name);
+    command.data = cb_pack_message(proto.message , &command.n_data);
     return command;
+}
+
+void cb_command_free(cb_command* command)
+{
+    free(command->data);
+    command->n_data = 0;
 }

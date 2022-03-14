@@ -56,11 +56,11 @@ typedef struct cb_bus
 
     CB_BUS_VIRTUAL(void, publish, const ProtobufCMessage* event);
 
-    CB_BUS_VIRTUAL(cb_future, send_async, const cb_command* command);
-    CB_BUS_VIRTUAL(cb_future, send_to_async, const cb_command* command, const cb_peer* peer);
+    CB_BUS_VIRTUAL(cb_future, send_async, cb_command command);
+    CB_BUS_VIRTUAL(cb_future, send_to_async, cb_command command, const cb_peer* peer);
 
-    CB_BUS_VIRTUAL(cb_command_result, send, const cb_command* command);
-    CB_BUS_VIRTUAL(cb_command_result, send_to, const cb_command* command, const cb_peer* peer);
+    CB_BUS_VIRTUAL(cb_command_result, send, cb_command command);
+    CB_BUS_VIRTUAL(cb_command_result, send_to, cb_command command, const cb_peer* peer);
 
     CB_BUS_VIRTUAL(cb_bus_error, start);
     CB_BUS_VIRTUAL(cb_bus_error, stop);
@@ -97,17 +97,17 @@ void cb_bus_publish(cb_bus* bus, const ProtobufCMessage* event);
 
 /// Send the given `command` to the corresponding peer handling it
 /// This send is asynchronous
-cb_future cb_bus_send_async(cb_bus* bus, const cb_command* command);
+cb_future cb_bus_send_async(cb_bus* bus, cb_command command);
 
 /// Send the given `command` to a specific target peer.
 /// This send is asynchronous
-cb_future cb_bus_send_to_async(cb_bus* bus, const cb_command* command, const cb_peer* peer);
+cb_future cb_bus_send_to_async(cb_bus* bus, cb_command command, const cb_peer* peer);
 
 /// Send the given `command` to the corresponding peer handling it
-cb_command_result cb_bus_send(cb_bus* bus, const cb_command* command);
+cb_command_result cb_bus_send(cb_bus* bus, cb_command command);
 
 /// Send the given `command` to a specific target `peer`
-cb_command_result cb_bus_send_to(cb_bus* bus, const cb_command* command, const cb_peer* peer);
+cb_command_result cb_bus_send_to(cb_bus* bus, cb_command command, const cb_peer* peer);
 
 /// Start the bus. Return `cb_bus_ok` if the bus successfully started or `cb_bus_error` otherwise
 cb_bus_error cb_bus_start(cb_bus* bus);

@@ -53,7 +53,7 @@ typedef struct cb_bus_impl
 typedef struct cb_command_future
 {
     // The original command that has been sent
-    const cb_command* command;
+    cb_command command;
 
     // The transport message
     cb_transport_message* transport_message;
@@ -78,7 +78,7 @@ static void cb_command_future_destroy(void *user, void *data)
 
 static void cb_command_future_init(cb_command_future* command_future)
 {
-    command_future->command = NULL;
+    cb_command_init(&command_future->command);
     command_future->transport_message = NULL;
     cb_future_init(&command_future->future, cb_command_future_destroy);
 }
@@ -187,14 +187,14 @@ static cb_bus_error cb_bus_impl_configure(cb_bus* base, const cb_peer_id* peer_i
     return cb_bus_ok;
 }
 
-static cb_future cb_bus_impl_send_to_async(cb_bus* base, const cb_command* command, const cb_peer* peer)
+static cb_future cb_bus_impl_send_to_async(cb_bus* base, cb_command command, const cb_peer* peer)
 {
     cb_bus_impl* impl = (cb_bus_impl *)base;
     cb_command_future* command_future = cb_new(cb_command_future, 1);
     cb_command_future_init(command_future);
 
     cb_transport_message* transport_message = cb_to_transport_message(
-            command,
+            &command,
             &impl->uuid_gen,
             &impl->peer_id,
             impl->inbound_endpoint, 
@@ -204,7 +204,7 @@ static cb_future cb_bus_impl_send_to_async(cb_bus* base, const cb_command* comma
     cb_transport_error error;
     cb_command_result result;
 
-    command_future->command = command;
+    cb_command_move(&command_future->command, &command);
     command_future->transport_message = transport_message;
 
     {
@@ -228,7 +228,7 @@ static cb_future cb_bus_impl_send_to_async(cb_bus* base, const cb_command* comma
     return command_future->future;
 }
 
-static cb_command_result cb_bus_impl_send_to(cb_bus* base, const cb_command* command, const cb_peer* peer)
+static cb_command_result cb_bus_impl_send_to(cb_bus* base, cb_command command, const cb_peer* peer)
 {
     cb_future future = cb_bus_impl_send_to_async(base, command, peer);
     cb_command_future* command_future = (cb_command_future *) cb_future_get(&future);
@@ -342,12 +342,12 @@ void cb_bus_publish(cb_bus* bus, const ProtobufCMessage* event)
     return CB_BUS_VIRT_CALL(bus, publish, event);
 }
 
-cb_command_result cb_bus_send(cb_bus* bus, const cb_command* command)
+cb_command_result cb_bus_send(cb_bus* bus, cb_command command)
 {
     return CB_BUS_VIRT_CALL(bus, send, command);
 }
 
-cb_command_result cb_bus_send_to(cb_bus* bus, const cb_command* command, const cb_peer* peer)
+cb_command_result cb_bus_send_to(cb_bus* bus, cb_command command, const cb_peer* peer)
 {
     return CB_BUS_VIRT_CALL(bus, send_to, command, peer);
 }

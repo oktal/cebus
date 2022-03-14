@@ -157,13 +157,14 @@ static cb_peer_directory_error cb_peer_directory_try_register_directory(cb_peer_
 {
     PeerDescriptor peer_descriptor;
     RegisterPeerCommand register_command;
-    cb_command command;
     cb_peer_directory_iterator directory_peer_iter = cb_peer_directory_iter(directory);
+    cb_command command;
 
     cb_peer_descriptor_proto_from(&peer_descriptor, descriptor);
     register_peer_command__init(&register_command);
     register_command.peer = &peer_descriptor; 
-    command = CB_COMMAND(register_command, "Abc.Zebus.Directory");
+
+    command = cb_command_from_proto(register_peer_command__command(&register_command));
 
     while (cb_peer_directory_iter_has_next(directory_peer_iter) == cebus_true)
     {
@@ -175,7 +176,7 @@ static cb_peer_directory_error cb_peer_directory_try_register_directory(cb_peer_
         CB_LOG_DBG(CB_LOG_LEVEL_DEBUG, "Registering %s to directory %s (%s)", peer_descriptor.peer->id->value, directory_peer.peer_id.value, directory_peer.endpoint);
 
         // TODO: Handle timeout
-        command_result = cb_bus_send_to(bus, &command, &directory_peer);
+        command_result = cb_bus_send_to(bus, CB_MOVE(command), &directory_peer);
         rc = cb_peer_directory_handle_register_peer_response(directory, command_result);
         if (rc == cb_peer_directory_ok)
             return rc;
@@ -239,7 +240,7 @@ cb_peer_directory_error cb_peer_directory_unregister(cb_peer_directory* director
     unregister_peer_command.peer_id = cb_peer_id_proto_init(&peer_id, &directory->self.peer_id);
     unregister_peer_command.peer_endpoint = directory->self.endpoint;
     unregister_peer_command.timestamp_utc = cb_bcl_date_time_proto_init(&timestamp_utc, cb_date_time_utc_now());
-    command = CB_COMMAND(unregister_peer_command, "Abc.Zebus.Directory");
+    command = cb_command_from_proto(unregister_peer_command__command(&unregister_peer_command));
 
     while (cb_peer_directory_iter_has_next(directory_peer_iter) == cebus_true)
     {
@@ -252,7 +253,7 @@ cb_peer_directory_error cb_peer_directory_unregister(cb_peer_directory* director
                 directory->self.peer_id.value, directory_peer.peer_id.value, directory_peer.endpoint);
 
         // TODO: Handle timeout
-        command_result = cb_bus_send_to(bus, &command, &directory_peer);
+        command_result = cb_bus_send_to(bus, CB_MOVE(command), &directory_peer);
         if (command_result.error_code == 0)
             return cb_peer_directory_ok;
     }
