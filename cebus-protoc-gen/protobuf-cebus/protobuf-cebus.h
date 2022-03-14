@@ -51,3 +51,17 @@ typedef struct ProtobufCebusMessageDescriptor
     /// Zero or more `ProtobufCebusMessageFlag` flags for this message
     uint32_t flags;
 } ProtobufCebusMessageDescriptor;
+
+typedef struct ProtobufCebusCommand
+{
+    const ProtobufCMessage* message;
+
+    const ProtobufCebusMessageDescriptor* descriptor;
+} ProtobufCebusCommand;
+
+typedef struct ProtobufCebusEvent
+{
+    const ProtobufCMessage* message;
+
+    const ProtobufCebusMessageDescriptor* descriptor;
+} ProtobufCebusEvent;

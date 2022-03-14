@@ -17,6 +17,9 @@ public:
 
     void generateDescriptorDefinitions(google::protobuf::io::Printer* printer) const;
 
+    void generateCommandOrEventHelperDeclarations(google::protobuf::io::Printer* printer) const;
+    void generateCommandOrEventHelperDefinitions(google::protobuf::io::Printer* printer) const;
+
 private:
     struct RoutingField {
         const google::protobuf::FieldDescriptor* descriptor;
@@ -135,6 +138,59 @@ void MessageGenerator::generateDescriptorDefinitions(google::protobuf::io::Print
     printer->Outdent();
 
     printer->Print("};\n");
+}
+
+void MessageGenerator::generateCommandOrEventHelperDeclarations(google::protobuf::io::Printer* printer) const
+{
+    std::map<std::string, std::string> vars;
+
+    vars["classname"] = google::protobuf::compiler::c::FullNameToC(descriptor->full_name(), descriptor->file());
+    vars["lcclassname"] = google::protobuf::compiler::c::FullNameToLower(descriptor->full_name(), descriptor->file());
+    const auto& options = descriptor->options();
+    switch (options.GetExtension(message_type)) {
+    case MessageType::Command:
+        vars["ret_type"] = "ProtobufCebusCommand";
+        vars["suffix"] = "command";
+        break;
+    case MessageType::Event:
+        vars["ret_type"] = "ProtobufCebusEvent";
+        vars["suffix"] = "event";
+        break;
+    }
+
+    printer->Print(vars, "$ret_type$ $lcclassname$__$suffix$(const $classname$* message);");
+}
+
+void MessageGenerator::generateCommandOrEventHelperDefinitions(google::protobuf::io::Printer* printer) const
+{
+    std::map<std::string, std::string> vars;
+
+    vars["classname"] = google::protobuf::compiler::c::FullNameToC(descriptor->full_name(), descriptor->file());
+    vars["lcclassname"] = google::protobuf::compiler::c::FullNameToLower(descriptor->full_name(), descriptor->file());
+    const auto& options = descriptor->options();
+    switch (options.GetExtension(message_type)) {
+    case MessageType::Command:
+        vars["ret_type"] = "ProtobufCebusCommand";
+        vars["suffix"] = "command";
+        break;
+    case MessageType::Event:
+        vars["ret_type"] = "ProtobufCebusEvent";
+        vars["suffix"] = "event";
+        break;
+    }
+
+    printer->Print(
+            vars,
+            "$ret_type$ $lcclassname$__$suffix$(const $classname$* message)\n"
+            "{\n"
+            );
+    printer->Indent();
+    printer->Print(vars,
+        "const $ret_type$ $suffix$ = { (const ProtobufCMessage *) message, &$lcclassname$__message_descriptor };\n"
+        "return $suffix$;\n"
+    );
+    printer->Outdent();
+    printer->Print("}\n");
 }
 
 bool MessageGenerator::isRoutableField(const google::protobuf::FieldDescriptor* field)
@@ -264,6 +320,7 @@ void FileGenerator::generateHeader(
 
         for (const auto& messageGenerator : messageGenerators) {
             messageGenerator->generateDescriptorDeclarations(&printer);
+            messageGenerator->generateCommandOrEventHelperDeclarations(&printer);
         }
     }
 }
@@ -280,6 +337,7 @@ void FileGenerator::generateSource(google::protobuf::compiler::OutputDirectory* 
 
         for (const auto& messageGenerator : messageGenerators) {
             messageGenerator->generateDescriptorDefinitions(&printer);
+            messageGenerator->generateCommandOrEventHelperDefinitions(&printer);
         }
     }
 }
