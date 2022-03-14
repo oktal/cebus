@@ -4,6 +4,7 @@
 
 #include "cebus/cebus_bool.h"
 
+#include "cebus/buffer.h"
 #include "cebus/command.h"
 #include "cebus/config.h"
 #include "cebus/dispatch/message_dispatcher.h"
@@ -37,10 +38,23 @@ typedef enum cb_bus_error
 
 typedef struct cb_command_result
 {
+    /// The error code of the command
     int error_code;
 
-    cb_command data;
+    cb_buffer data;
 } cb_command_result;
+
+/// Initialize a new `cb_command_result`
+/// Return `result`
+cb_command_result* cb_command_result_init(cb_command_result* result);
+
+/// Copy a `cb_command_result` from `src` to `dst`
+/// Return `dst`
+cb_command_result* cb_command_result_copy(cb_command_result* dst, const cb_command_result* src);
+
+/// Move a `cb_command_result` from `src` to `dst`. A move operation will invalidate `src`
+/// Return `dst`
+cb_command_result* cb_command_result_move(cb_command_result* dst, cb_command_result* src);
 
 /// The bus interface
 typedef struct cb_bus

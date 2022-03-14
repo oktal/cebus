@@ -80,7 +80,7 @@ static void cb_command_future_init(cb_command_future* command_future)
 {
     cb_command_init(&command_future->command);
     command_future->transport_message = NULL;
-    cb_future_init(&command_future->future, cb_command_future_destroy);
+    cb_future_init(&command_future->future, sizeof(cb_command_result));
 }
 
 static void cb_bus_impl_message_id_task_hash_free(cb_hash_key_t key, cb_hash_value_t value, void* user)
@@ -133,7 +133,8 @@ static void cb_bus_impl_handle_on_message_execution_completed(cb_bus_impl* impl,
                 command_future->result.data.data = message->payload.data;
                 command_future->result.data.n_data = message->payload.len;
             }
-            cb_future_set(&command_future->future, command_future);
+            cb_future_set(&command_future->future, &command_future->result);
+            free(command_future);
         }
     }
 }
@@ -231,9 +232,10 @@ static cb_future cb_bus_impl_send_to_async(cb_bus* base, cb_command command, con
 static cb_command_result cb_bus_impl_send_to(cb_bus* base, cb_command command, const cb_peer* peer)
 {
     cb_future future = cb_bus_impl_send_to_async(base, command, peer);
-    cb_command_future* command_future = (cb_command_future *) cb_future_get(&future);
-    cb_command_result result = command_future->result;
-    cb_future_destroy(&future);
+    cb_command_result result;
+
+    cb_command_result_move(&result, cb_future_get(&future));
+    cb_future_destroy(&future, NULL);
     return result;
 }
 
@@ -297,6 +299,30 @@ static void cb_bus_impl_init_base(cb_bus* base)
     CB_BUS_VIRT_SET(base, start, cb_bus_impl_start);
     CB_BUS_VIRT_SET(base, stop, cb_bus_impl_stop);
     CB_BUS_VIRT_SET(base, free, cb_bus_impl_free);
+}
+
+cb_command_result* cb_command_result_init(cb_command_result* result)
+{
+    result->error_code = 0;
+    cb_buffer_init(&result->data);
+
+    return result;
+}
+
+cb_command_result* cb_command_result_copy(cb_command_result* dst, const cb_command_result* src)
+{
+    dst->error_code = src->error_code;
+    cb_buffer_copy(&dst->data, &src->data);
+
+    return dst;
+}
+
+cb_command_result* cb_command_result_move(cb_command_result* dst, cb_command_result* src)
+{
+    dst->error_code = src->error_code;
+    cb_buffer_move(&dst->data, &src->data);
+
+    return dst;
 }
 
 cb_bus* cb_bus_create(cb_transport* transport)
