@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct cb_future_get_continuation_state
 {
@@ -18,14 +19,15 @@ typedef struct cb_future_inner
 {
     cb_mutex_t mutex;
 
-    void* data;
-
     cb_future_state state;
 
     cb_future_continuation continuation;
-    cb_future_destructor destructor;
 
     void* user;
+
+    size_t value_size;
+
+    uint8_t value_storage[];
 } cb_future_inner;
 
 static void cb_future_get_continuation_state_init(cb_future_get_continuation_state* state)
@@ -59,15 +61,15 @@ void cb_thread_destroy(cb_thread* thread)
     thread->data = NULL;
 }
 
-void cb_future_init(cb_future* future, cb_future_destructor destructor)
+void cb_future_init(cb_future* future, size_t value_size)
 {
-    cb_future_inner* inner = cb_new(cb_future_inner, 1);
-    inner->data = NULL;
+    cb_future_inner* inner = cb_alloc(sizeof(cb_future_inner) + value_size);
     inner->user = NULL;
     cb_mutex_init(&inner->mutex);
     inner->state = cb_future_pending;
     inner->continuation = NULL;
-    inner->destructor = destructor;
+    memset(&inner->value_storage, 0, value_size);
+    inner->value_size = value_size;
 
     future->inner = inner;
 }
@@ -79,7 +81,7 @@ cb_future_state cb_future_poll(cb_future* future, void** data_out)
     cb_future_inner* inner = (cb_future_inner *) future->inner;
 
     cb_mutex_lock(&inner->mutex);
-    data = inner->data;
+    data = &inner->value_storage;
     state = inner->state;
     cb_mutex_unlock(&inner->mutex);
 
@@ -102,7 +104,7 @@ void cb_future_then(cb_future* future, cb_future_continuation continuation, void
     {
         // Do not hold mutex while calling user callaback
         cb_mutex_unlock(&inner->mutex);
-        continuation(user, inner->data);
+        continuation(user, &inner->value_storage);
     }
     else
     {
@@ -119,13 +121,13 @@ void cb_future_set(cb_future* future, void* data)
     cb_mutex_lock(&inner->mutex);
     if (inner->state == cb_future_pending)
     {
-        inner->data = data;
+        memcpy(&inner->value_storage, data, inner->value_size);
         inner->state = cb_future_ready;
         if (inner->continuation != NULL)
         {
             // Do not hold mutex while calling user callaback
             cb_mutex_unlock(&inner->mutex);
-            inner->continuation(inner->user, inner->data);
+            inner->continuation(inner->user, &inner->value_storage);
         }
         else
         {
@@ -148,12 +150,12 @@ void* cb_future_get(cb_future* future)
     return state.result;
 }
 
-void cb_future_destroy(cb_future *future)
+void cb_future_destroy(cb_future *future, cb_future_destructor dtor)
 {
     cb_future_inner* inner = (cb_future_inner *) future->inner;
 
-    if (inner->destructor != NULL)
-        inner->destructor(inner->user, inner->data);
+    if (dtor != NULL)
+        dtor(inner->user, &inner->value_storage);
 
     free(future->inner);
     future->inner = NULL;

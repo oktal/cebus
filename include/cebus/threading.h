@@ -98,7 +98,7 @@ typedef struct cb_future
 } cb_future;
 
 /// Initializes a new `future`
-void cb_future_init(cb_future* future, cb_future_destructor destructor);
+void cb_future_init(cb_future* future, size_t value_size);
 
 cb_future_state cb_future_poll(cb_future* future, void** data_out);
 
@@ -108,4 +108,4 @@ void cb_future_set(cb_future* future, void* data);
 
 void* cb_future_get(cb_future* future);
 
-void cb_future_destroy(cb_future* future);
+void cb_future_destroy(cb_future* future, cb_future_destructor dtor);
