@@ -14,6 +14,7 @@
 
 #include "peer_id.pb-c.h"
 #include "peer_started.pb-c.h"
+#include "ping_peer_command.pb-c.h"
 #include "register_peer_command.pb-c.h"
 #include "register_peer_response.pb-c.h"
 #include "unregister_peer_command.pb-c.h"
@@ -198,18 +199,32 @@ static void cb_peer_directory_handle_peer_started(ProtobufCMessage* message, voi
     peer_started__free_unpacked(peer_started, NULL);
 }
 
+static void cb_peer_directory_handle_ping_peer_command(ProtobufCMessage* message, void* user)
+{
+    cb_peer_directory* directory = (cb_peer_directory *) user;
+    PingPeerCommand* ping_peer = (PingPeerCommand *) message;
+
+    CB_LOG_DBG(CB_LOG_LEVEL_DEBUG, "Received PingPeerCommand");
+
+    ping_peer_command__free_unpacked(ping_peer, NULL);
+}
+
 void cb_peer_directory_init(cb_peer_directory* directory, cb_bus* bus, cb_bus_configuration configuration)
 {
-    cb_message_proto_invoker_init(&directory->invoker, bus);
+    cb_proto_message_dispatcher_init(&directory->dispatcher, bus);
 
     directory->configuration = configuration;
     directory->peers = cb_hash_map_new(cb_peer_id_hash, cb_peer_id_hash_eq);
     directory->subscriptions_index = cb_hash_map_new(cb_message_type_id_hash, cb_message_type_id_hash_eq);
 
     {
-        cb_message_proto_invoker* invoker = &directory->invoker;
         PeerStarted peer_started = PEER_STARTED__INIT;
-        cb_message_proto_invoker_add(invoker, (const ProtobufCMessage *) &peer_started, "Abc.Zebus.Directory", cb_peer_directory_handle_peer_started, directory);
+        ProtobufCebusEvent event = peer_started__event(&peer_started);
+        cb_proto_message_dispatcher_register(&directory->dispatcher, (const ProtobufCebusMessage *) &event, cb_peer_directory_handle_peer_started, directory);
+
+        PingPeerCommand ping_peer = PING_PEER_COMMAND__INIT;
+        ProtobufCebusCommand ping_peer_command = ping_peer_command__command(&ping_peer);
+        cb_proto_message_dispatcher_register(&directory->dispatcher, (const ProtobufCebusMessage *) &ping_peer_command, cb_peer_directory_handle_ping_peer_command, directory);
     }
 }
 

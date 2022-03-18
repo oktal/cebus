@@ -66,7 +66,7 @@ typedef struct cb_bus
     CB_BUS_VIRTUAL(cebus_bool, is_running);
 
     CB_BUS_VIRTUAL(cb_bus_error, configure, const cb_peer_id* peer_id, const char *environment);
-    CB_BUS_VIRTUAL(void, handle_with, const cb_message_type_id* message_type_id, cb_message_callback callback, void* user);
+    CB_BUS_VIRTUAL(void, register_invoker, const cb_message_type_id* message_type_id, const cb_message_handler_invoker* invoker);
 
     CB_BUS_VIRTUAL(void, publish, const ProtobufCMessage* event);
 
@@ -103,8 +103,8 @@ cebus_bool cb_bus_is_running(cb_bus* bus);
 /// Configure the `bus` with the given `peer_id` and `environment`. Return `cb_bus_ok` on success or `cb_bus_error` otherwise
 cb_bus_error cb_bus_configure(cb_bus* bus, const cb_peer_id* peer_id, const char* environment);
 
-/// Set handler for `cb_message_type_id` message_type_id
-void cb_bus_handle_with(cb_bus* bus, const cb_message_type_id* message_type_id, cb_message_callback callback, void* user);
+/// Register the message invoker for a `cb_message_type_id` to the given `bus`
+void cb_bus_register_invoker(cb_bus* bus, const cb_message_type_id* message_type_id, const cb_message_handler_invoker* invoker);
 
 /// Publish the given `event` on the `bus`
 void cb_bus_publish(cb_bus* bus, const ProtobufCMessage* event);

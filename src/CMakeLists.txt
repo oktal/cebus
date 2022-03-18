@@ -13,6 +13,7 @@ set(cebus_PROTOS
     peer_started.proto
     peer_id.proto
     peer.proto
+    ping_peer_command.proto
     register_peer_command.proto
     register_peer_response.proto
     subscription.proto
@@ -32,13 +33,15 @@ set(cebus_SRC
     buffer.c
     bus.c
     command.c
+    dispatch_queue.c
     hash_map.c
     hasher.c
     log.c
     message_context.c
+    message_dispatch.c
     message_dispatcher.c
+    message_handler_invoker.c
     message_id.c
-    message_proto_invoker.c
     message_serializer.c
     message_type_id.c
     originator_info.c
@@ -47,6 +50,7 @@ set(cebus_SRC
     peer_directory.c
     peer_id.c
     peer_subscription_tree.c
+    proto_message_dispatcher.c
     random.c
     string.c
     subscription.c

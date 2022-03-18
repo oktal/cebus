@@ -223,9 +223,22 @@ void cb_hash_map_free(cb_hash_map* map, cb_hash_dtor destructor, void* user)
     free(map);
 }
 
+void cb_hash_str(cb_hasher* hasher, cb_hash_key_t key)
+{
+    cb_hasher_write_str(hasher, (const char *) key);
+}
+
 void cb_hash_u64(cb_hasher* hasher, cb_hash_key_t key)
 {
     cb_hasher_write_u64(hasher, *(uint64_t *) key);
+}
+
+cebus_bool cb_hash_eq_str(cb_hash_key_t lhs, cb_hash_key_t rhs)
+{
+    const char* s0 = (const char *) lhs;
+    const char* s1 = (const char *) rhs;
+
+    return cebus_bool_from_int(strcmp(s0, s1) == 0);
 }
 
 cebus_bool cb_hash_eq_u64(cb_hash_key_t lhs, cb_hash_key_t rhs)

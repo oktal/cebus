@@ -15,10 +15,11 @@ void cb_message_type_id_set(cb_message_type_id* type_id, const char* fmt, ...)
     va_end(list);
 }
 
-cb_message_type_id* cb_message_type_id_from_proto_message(cb_message_type_id* type_id, const ProtobufCMessage* message, const char* namespace)
+cb_message_type_id* cb_message_type_id_from_proto_message(cb_message_type_id* type_id, const ProtobufCebusMessage* message)
 {
-    const ProtobufCMessageDescriptor* descriptor = message->descriptor;
-    cb_message_type_id_set(type_id, "%s.%s", namespace, descriptor->name);
+    const ProtobufCMessageDescriptor* descriptor = message->message->descriptor;
+    const ProtobufCebusMessageDescriptor* cebus_descriptor = message->descriptor;
+    cb_message_type_id_set(type_id, "%s.%s", cebus_descriptor->namespace_name, descriptor->name);
     return type_id;
 }
 

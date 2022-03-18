@@ -5,7 +5,7 @@
 #include "cebus/cebus_bool.h"
 #include "cebus/collection/hash_map.h"
 #include "cebus/collection/array.h"
-#include "cebus/dispatch/message_proto_invoker.h"
+#include "cebus/dispatch/proto_message_dispatcher.h"
 #include "cebus/peer.h"
 #include "cebus/peer_subscription_tree.h"
 #include "cebus/subscription.h"
@@ -43,7 +43,7 @@ typedef struct cb_peer_directory
 
     cb_hash_map* subscriptions_index;
 
-    cb_message_proto_invoker invoker;
+    cb_proto_message_dispatcher dispatcher;
 } cb_peer_directory;
 
 /// Initialize a new `directory` with the given bus `configuration`

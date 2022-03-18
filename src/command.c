@@ -38,11 +38,11 @@ cb_command* cb_command_move(cb_command* dst, cb_command* src)
 cb_command cb_command_from_proto(ProtobufCebusCommand proto)
 {
     cb_command command;
-    const ProtobufCebusMessageDescriptor* cebus_descriptor = proto.descriptor;
-    const ProtobufCMessageDescriptor* descriptor = proto.message->descriptor;
+    const ProtobufCebusMessageDescriptor* cebus_descriptor = proto.base.descriptor;
+    const ProtobufCMessageDescriptor* descriptor = proto.base.message->descriptor;
 
     cb_message_type_id_set(&command.message_type_id, "%s.%s", cebus_descriptor->namespace_name, descriptor->name);
-    command.data = cb_pack_message(proto.message , &command.n_data);
+    command.data = cb_pack_message(proto.base.message , &command.n_data);
     return command;
 }
 

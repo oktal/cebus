@@ -2,7 +2,9 @@
 
 #include "cebus/alloc.h"
 #include "cebus/atomic.h"
+#include "cebus/collection/array.h"
 #include "cebus/collection/hash_map.h"
+#include "cebus/dispatch/message_dispatch.h"
 #include "cebus/log.h"
 #include "cebus/message_id.h"
 #include "cebus/threading.h"
@@ -46,7 +48,7 @@ typedef struct cb_bus_impl
     cb_time_uuid_gen uuid_gen;
 
     // Message dispatcher
-    cb_message_dispatcher dispatcher;
+    cb_message_dispatcher message_dispatcher;
 } cb_bus_impl;
 
 // An ongoing command
@@ -139,6 +141,12 @@ static void cb_bus_impl_handle_on_message_execution_completed(cb_bus_impl* impl,
     }
 }
 
+static void cb_bus_impl_on_transport_message_continuation(cb_message_dispatch* dispatch, void* user)
+{
+    CB_LOG_DBG(CB_LOG_LEVEL_DEBUG, "Message %s has been handled",
+            dispatch->transport_message->message_type_id.value);
+}
+
 static void cb_bus_impl_on_transport_message(const TransportMessage* message, void* user)
 {
     cb_bus_impl* impl = (cb_bus_impl *)user;
@@ -152,10 +160,9 @@ static void cb_bus_impl_on_transport_message(const TransportMessage* message, vo
     }
     else
     {
-        cb_message_type_id message_type_id;
         cb_transport_message* transport_message = cb_transport_message_from_proto_new(message);
-        cb_message_type_id_from_proto(&message_type_id, message->message_type_id);
-        cb_message_dispatcher_dispatch(&impl->dispatcher, &message_type_id, transport_message);
+        cb_message_dispatch* dispatch = cb_message_dispatch_new(transport_message, cb_bus_impl_on_transport_message_continuation, impl);
+        cb_message_dispatcher_dispatch(&impl->message_dispatcher, dispatch);
     }
 }
 
@@ -175,7 +182,7 @@ static cb_bus_error cb_bus_impl_init(cb_bus* base)
     impl->message_id_tasks = cb_hash_map_new(cb_message_id_hash, cb_message_id_hash_eq);
     memset(impl->environment, 0, sizeof(impl->environment));
 
-    cb_message_dispatcher_init(&impl->dispatcher);
+    cb_message_dispatcher_init(&impl->message_dispatcher);
     return cb_bus_ok;
 }
 
@@ -186,6 +193,12 @@ static cb_bus_error cb_bus_impl_configure(cb_bus* base, const cb_peer_id* peer_i
     strncpy(impl->environment, environment, CEBUS_STR_MAX);
     cb_transport_configure(impl->transport, &impl->peer_id, impl->environment);
     return cb_bus_ok;
+}
+
+static void cb_bus_impl_register_invoker(cb_bus* base, const cb_message_type_id* message_type_id, const cb_message_handler_invoker* invoker)
+{
+    cb_bus_impl* impl = (cb_bus_impl *) base;
+    cb_message_dispatcher_register(&impl->message_dispatcher, message_type_id, invoker);
 }
 
 static cb_future cb_bus_impl_send_to_async(cb_bus* base, cb_command command, const cb_peer* peer)
@@ -239,20 +252,13 @@ static cb_command_result cb_bus_impl_send_to(cb_bus* base, cb_command command, c
     return result;
 }
 
-static void cb_bus_impl_handle_with(cb_bus* base, const cb_message_type_id* message_type_id, cb_message_callback callback, void* user)
-{
-    cb_bus_impl* impl = (cb_bus_impl *) base;
-    cb_message_dispatcher* dispatcher = &impl->dispatcher;
-    cb_message_dispatcher_add(dispatcher, message_type_id, callback, user);
-}
-
 static cb_bus_error cb_bus_impl_start(cb_bus* base)
 {
     cb_bus_impl* impl = (cb_bus_impl *)base;
     uint64_t expected = 0;
     cb_transport_error transport_err;
 
-    if (cb_atomic_compare_exchange_strong_u64((volatile uint64_t *)&impl->is_running, expected, 1) == cebus_false)
+    if (cb_atomic_compare_exchange_strong_u64((volatile uint64_t *)&impl->is_running, &expected, 1) == cebus_false)
         return cb_bus_error_already_running;
 
     CB_LOG_DBG(CB_LOG_LEVEL_DEBUG, "Starting transport ...");
@@ -262,6 +268,9 @@ static cb_bus_error cb_bus_impl_start(cb_bus* base)
         return cb_bus_error_transport;
 
     impl->inbound_endpoint = cb_transport_inbound_endpoint(impl->transport);
+
+    cb_message_dispatcher_start(&impl->message_dispatcher);
+
     return cb_bus_ok;
 }
 
@@ -271,12 +280,14 @@ static cb_bus_error cb_bus_impl_stop(cb_bus* base)
     uint64_t expected = 1;
     cb_transport_error transport_err;
 
-    if (cb_atomic_compare_exchange_strong_u64((volatile uint64_t *)&impl->is_running, expected, 0) == cebus_false)
+    if (cb_atomic_compare_exchange_strong_u64((volatile uint64_t *)&impl->is_running, &expected, 0) == cebus_false)
         return cb_bus_error_not_started;
 
     CB_LOG_DBG(CB_LOG_LEVEL_DEBUG, "Stopping transport ...");
     if  (!CB_TRANSPORT_OK(transport_err = cb_transport_stop(impl->transport)))
         return cb_bus_error_transport;
+
+    cb_message_dispatcher_stop(&impl->message_dispatcher);
 
     return cb_bus_ok;
 }
@@ -286,6 +297,7 @@ static void cb_bus_impl_free(cb_bus* base)
     cb_bus_impl* impl = (cb_bus_impl *) base;
     cb_hash_map_free(impl->message_id_tasks, cb_bus_impl_message_id_task_hash_free, NULL);
     cb_transport_free(impl->transport);
+    cb_message_dispatcher_free(&impl->message_dispatcher);
     free(impl);
 }
 
@@ -294,7 +306,7 @@ static void cb_bus_impl_init_base(cb_bus* base)
     CB_BUS_VIRT_SET(base, init, cb_bus_impl_init);
     CB_BUS_VIRT_SET(base, peer_id, cb_bus_impl_peer_id);
     CB_BUS_VIRT_SET(base, configure, cb_bus_impl_configure);
-    CB_BUS_VIRT_SET(base, handle_with, cb_bus_impl_handle_with);
+    CB_BUS_VIRT_SET(base, register_invoker, cb_bus_impl_register_invoker);
     CB_BUS_VIRT_SET(base, send_to, cb_bus_impl_send_to);
     CB_BUS_VIRT_SET(base, start, cb_bus_impl_start);
     CB_BUS_VIRT_SET(base, stop, cb_bus_impl_stop);
@@ -358,9 +370,9 @@ cb_bus_error cb_bus_configure(cb_bus* bus, const cb_peer_id* peer_id, const char
     return CB_BUS_VIRT_CALL(bus, configure, peer_id, environment);
 }
 
-void cb_bus_handle_with(cb_bus* bus, const cb_message_type_id* message_type_id, cb_message_callback callback, void* user)
+void cb_bus_register_invoker(cb_bus* bus, const cb_message_type_id* message_type_id, const cb_message_handler_invoker* invoker)
 {
-    return CB_BUS_VIRT_CALL(bus, handle_with, message_type_id, callback, user);
+    return CB_BUS_VIRT_CALL(bus, register_invoker, message_type_id, invoker);
 }
 
 void cb_bus_publish(cb_bus* bus, const ProtobufCMessage* event)

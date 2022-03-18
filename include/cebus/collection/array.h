@@ -72,6 +72,9 @@ void* cb_array_get_mut(cb_array* array, size_t index);
 /// Return the number of elements of the `array`
 size_t cb_array_size(const cb_array* array);
 
+/// Return whether the `array` is empty or not
+cebus_bool cb_array_empty(const cb_array* array);
+
 /// Clear the array and call the `destructor` function with `user` provided data on every entry of the array
 void cb_array_clear(cb_array* array, cb_array_dtor destructor, void* user);
 

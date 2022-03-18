@@ -108,6 +108,11 @@ size_t cb_array_size(const cb_array* array)
     return array->size;
 }
 
+cebus_bool cb_array_empty(const cb_array* array)
+{
+    return cebus_bool_from_int(array->size == 0);
+}
+
 void cb_array_clear(cb_array* array, cb_array_dtor destructor, void* user)
 {
     if (destructor != NULL)

@@ -1,0 +1,9 @@
+syntax = "proto2";
+
+import "cebus.proto";
+
+message PingPeerCommand {
+    option (message_type) = Command;
+    option (namespace) = "Abc.Zebus.Directory";
+}
+

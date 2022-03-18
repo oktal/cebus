@@ -50,6 +50,7 @@ int main(int argc, const char* argv[])
     cb_peer_set_endpoint(&self, argv[3]);
 
     cb_zmq_socket_options_init_default(&options);
+    options.receive_timeout = timespan_from_minutes(5);
     strcpy(zmq_configuration.inbound_endpoint, argv[3]);
 
     transport = cb_zmq_transport_new(zmq_configuration, options);

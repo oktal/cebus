@@ -5,6 +5,7 @@ import "cebus.proto";
 
 message PeerStarted {
     option (message_type) = Event;
+    option (namespace) = "Abc.Zebus.Directory";
 
     required PeerDescriptor peer_descriptor = 1;
 }

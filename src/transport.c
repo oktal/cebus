@@ -1,9 +1,9 @@
 #include "cebus/transport/transport.h"
 #include "cebus/alloc.h"
 
-#define CB_VA_ARGS(...) , ##__VA_ARGS__
+#define CB_TRANSPORT_VA_ARGS(...) , ##__VA_ARGS__
 #define CB_TRANSPORT_VIRT_CALL(base, func_name, ...) \
-    base->func_name##_func(base CB_VA_ARGS(__VA_ARGS__))
+    base->func_name##_func(base CB_TRANSPORT_VA_ARGS(__VA_ARGS__))
 
 void cb_transport_on_message_received(cb_transport* transport, cb_transport_on_message on_message, void* user)
 {

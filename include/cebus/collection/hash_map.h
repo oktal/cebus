@@ -80,8 +80,14 @@ void cb_hash_foreach(const cb_hash_map* map, cb_hash_iter func, void* user);
 /// on every entry of the map
 void cb_hash_map_free(cb_hash_map* map, cb_hash_dtor destructor, void* user);
 
+/// Hash a single `const char*` key
+void cb_hash_str(cb_hasher* hasher, cb_hash_key_t key);
+
 /// Hash a single `uint64_t` key
 void cb_hash_u64(cb_hasher* hasher, cb_hash_key_t key);
 
-/// Compare two `uint64_t` keys
+/// Compare two `const char*` hash keys
+cebus_bool cb_hash_str_eq(cb_hash_key_t lhs, cb_hash_key_t rhs);
+
+/// Compare two `uint64_t` hash keys
 cebus_bool cb_hash_eq_u64(cb_hash_key_t lhs, cb_hash_key_t rhs);

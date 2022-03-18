@@ -6,6 +6,8 @@
 
 #include "message_type_id.pb-c.h"
 
+#include "protobuf-cebus/protobuf-cebus.h"
+
 #define CB_MESSAGE_TYPE_ID_END_OF_STREAM "Abc.Zebus.Transport.EndOfStream"
 #define CB_MESSAGE_TYPE_ID_END_OF_STREAM_ACK "Abc.Zebus.Transport.EndOfStreamAck"
 #define CB_MESSAGE_TYPE_ID_MESSAGE_EXECUTION_COMPLETED "Abc.Zebus.Core.MessageExecutionCompleted"
@@ -17,7 +19,7 @@ typedef struct cb_message_type_id
 
 void cb_message_type_id_set(cb_message_type_id* type_id, const char* fmt, ...);
 
-cb_message_type_id* cb_message_type_id_from_proto_message(cb_message_type_id* type_id, const ProtobufCMessage* message, const char* namespace);
+cb_message_type_id* cb_message_type_id_from_proto_message(cb_message_type_id* type_id, const ProtobufCebusMessage* message);
 cb_message_type_id* cb_message_type_id_copy(cb_message_type_id* dst, const cb_message_type_id* src);
 
 cb_message_type_id* cb_message_type_id_clone(const cb_message_type_id* src);
