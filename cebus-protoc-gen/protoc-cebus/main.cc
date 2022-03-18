@@ -186,7 +186,7 @@ void MessageGenerator::generateCommandOrEventHelperDefinitions(google::protobuf:
             );
     printer->Indent();
     printer->Print(vars,
-        "const $ret_type$ $suffix$ = { (const ProtobufCMessage *) message, &$lcclassname$__message_descriptor };\n"
+        "const $ret_type$ $suffix$ = { { (const ProtobufCMessage *) message, &$lcclassname$__message_descriptor } };\n"
         "return $suffix$;\n"
     );
     printer->Outdent();

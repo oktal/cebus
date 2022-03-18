@@ -52,16 +52,19 @@ typedef struct ProtobufCebusMessageDescriptor
     uint32_t flags;
 } ProtobufCebusMessageDescriptor;
 
-typedef struct ProtobufCebusCommand
+typedef struct ProtobufCebusMessage
 {
     const ProtobufCMessage* message;
 
     const ProtobufCebusMessageDescriptor* descriptor;
+} ProtobufCebusMessage;
+
+typedef struct ProtobufCebusCommand
+{
+    ProtobufCebusMessage base;
 } ProtobufCebusCommand;
 
 typedef struct ProtobufCebusEvent
 {
-    const ProtobufCMessage* message;
-
-    const ProtobufCebusMessageDescriptor* descriptor;
+    ProtobufCebusMessage base;
 } ProtobufCebusEvent;
